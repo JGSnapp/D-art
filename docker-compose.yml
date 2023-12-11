@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  gpt:
+    build: ./gpt
+    ports:
+      - "5000:5000"
+  backend:
+    build: ./backend
+    ports:
+      - 8080:8080
+    links:
+      - mongo
+  frontend:
+    build: ./frontend
+    ports:
+      - 80:80
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example

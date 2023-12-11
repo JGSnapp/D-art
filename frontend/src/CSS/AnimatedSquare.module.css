@@ -1,0 +1,82 @@
+/* App.css */
+.progress1 {
+    animation: move-around1 9s infinite;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.564);
+    border-radius: 5px;
+  }
+  .progress2 {
+    animation: move-around2 9s infinite;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.564);
+    border-radius: 5px;
+  }
+  .progress3 {
+    animation: move-around3 9s infinite;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.564);
+    border-radius: 5px;
+  }
+  
+  @keyframes move-around1 {
+    0%, 16.66%, 100% {
+      top: 0px;
+      left: 0px;
+    }
+    25%, 41.66% {
+      top: 0px;
+      left: 22px;
+    }
+    50%, 66.66% {
+      top: 22px;
+      left: 22px;
+    }
+    75%, 91.66% {
+      top: 22px;
+      left: 0px;
+    }
+  }
+  
+  @keyframes move-around2 {
+    0%, 8.33%, 91.66%, 100% {
+      top: 0px;
+      left: 22px;
+    }
+    16.66%, 33.33% {
+      top: 22px;
+      left: 22px;
+    }
+    41.66%, 58.33% {
+      top: 22px;
+      left: 0px;
+    }
+    66.66%, 83.33% {
+      top: 0px;
+      left: 0px;
+    }
+  }
+  
+  @keyframes move-around3 {
+    0%, 83.33%, 100% {
+      top: 22px;
+      left: 22px;
+    }
+    8.33%, 25% {
+      top: 22px;
+      left: 0px;
+    }
+    33.33%, 50% {
+      top: 0px;
+      left: 0px;
+    }
+    58.33%, 75% {
+      top: 0px;
+      left: 22px;
+    }
+  }

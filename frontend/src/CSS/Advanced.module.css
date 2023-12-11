@@ -1,0 +1,64 @@
+.center_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.square {
+    width: 300px;
+    height: 300px;
+    max-width: 90%;
+    max-height: 70%;
+    background-color: rgb(99, 97, 97);
+    border-radius: 15px;
+    margin: 10px;
+}
+
+.textarea {
+    display: flex;
+    width: 100%; /* Занимает всю доступную ширину */
+    max-width: 90%;
+    max-height: 70%;
+    height: 30px;
+    border-radius: 10px; 
+    margin-top: 5px;
+    resize: vertical; /* Разрешить изменение размеров по горизонтали и вертикали */
+    overflow: hidden; /* Скрыть прокрутку */
+}
+
+.bqq {
+    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+    color: white;
+    border: none;
+    box-sizing: border-box;
+    border-radius: 10px;
+    margin-top: 10px; 
+    width: 100%; /* Занимает всю доступную ширину */
+    height: 30px; /* Учитывает padding и border в общей высоте элемента */
+}
+
+.vvod {
+    display: flex;
+    width: 100%; /* Занимает всю доступную ширину */
+    height: 30px;
+    margin-top: 10px; 
+}
+
+.input {
+    flex: 1; /* Занимает доступное пространство внутри flex-контейнера */
+    height: 95%; /* Занимает всю высоту flex-контейнера */
+    box-sizing: border-box;
+    border-radius: 10px; /* Учитывает padding и border в общей высоте элемента */
+    border: none;
+    margin-right: 10px; 
+}
+
+.bqq2 {
+    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+    color: white;
+    border: none;
+    height: 90%; /* Занимает всю высоту flex-контейнера */
+    width: 45px;
+    box-sizing: border-box;
+    border-radius: 10px; /* Учитывает padding и border в общей высоте элемента */
+}

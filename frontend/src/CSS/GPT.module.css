@@ -1,0 +1,55 @@
+.center_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.square {
+    width: 300px;
+    height: 300px;
+    max-width: 90%;
+    max-height: 70%;
+    background-color: rgb(99, 97, 97);
+    border-radius: 15px;
+    margin: 10px;
+    overflow: hidden;
+}
+
+.vvod {
+    display: flex;
+    width: 100%; /* Занимает всю доступную ширину */
+    max-width: 90%;
+    max-height: 70%;
+    height: 30px;
+}
+
+.input {
+    flex: 1; /* Занимает доступное пространство внутри flex-контейнера */
+    height: 100%; /* Занимает всю высоту flex-контейнера */
+    box-sizing: border-box;
+    border-radius: 10px; /* Учитывает padding и border в общей высоте элемента */
+    border: none;
+}
+
+.bqq {
+    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+    color: white;
+    border: none;
+    height: 100%; /* Занимает всю высоту flex-контейнера */
+    width: 45px;
+    box-sizing: border-box;
+    margin-left: 10px; 
+    border-radius: 10px; /* Учитывает padding и border в общей высоте элемента */
+}
+
+.bqq2 {
+    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+    color: white;
+    border: none;
+    height: 30px; /* Занимает всю высоту flex-контейнера */
+    width: 90%;
+    box-sizing: border-box;
+    margin-left: 10px; 
+    margin-top: 10px; 
+    border-radius: 10px; /* Учитывает padding и border в общей высоте элемента */
+}

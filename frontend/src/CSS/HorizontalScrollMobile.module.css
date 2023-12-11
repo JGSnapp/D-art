@@ -1,0 +1,5 @@
+.main {
+  display: flex;
+  white-space: nowrap;
+  overflow-x: scroll;
+}

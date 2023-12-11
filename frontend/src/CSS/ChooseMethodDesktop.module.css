@@ -1,0 +1,32 @@
+/* Добавлены точки перед классами .b и .clr */
+.b {
+    flex: 1;
+    background-color: rgba(255, 0, 0, 0);
+    border-color: rgba(255, 0, 0, 0);
+    height: 100%;
+    z-index: 3;
+    color: rgb(255, 255, 255);
+    font-size: 13px;
+  }
+  
+  .clr {
+    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+    width: 100px;
+    height: 40px;
+    top: 0px;
+    border-radius: 15px;
+    position: absolute;
+    transition: 0.4s; /* Добавлено значение времени для transition */
+  }
+  
+  .clr.pos1 {
+    left: 0px;
+  }
+  
+  .clr.pos2 {
+    left: calc(50% - 50px);
+  }
+  
+  .clr.pos3 {
+    left: calc(100% - 100px);
+  }

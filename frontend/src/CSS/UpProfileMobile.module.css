@@ -1,0 +1,52 @@
+.modal {
+    width: 150px;
+    height: 150px;
+    border-radius: 10px;
+    background-color: rgba(74, 74, 74, 0.698);
+    overflow: hidden;
+    margin-left: 15px;
+    margin-bottom: 15px;
+    position: relative;
+    border: none;
+}
+.name{
+    font-size: 15px;
+    left: 10%;
+    width: 80%;
+    position: absolute;
+    color:  rgb(255, 255, 255);
+    overflow: hidden;
+}
+.img1{
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    object-fit: cover;
+}
+
+.button1{
+    width:95%;
+    height: 25px;
+    left: 2.5%;
+    position: absolute;
+    border-radius: 5px;
+    background-color: rgba(77, 77, 77, 0.618);
+    outline: none; /* Убирает обводку фокуса */
+    border: none; /* Убирает границу кнопки */
+    color:  rgb(255, 255, 255);
+
+}
+.button2{
+    width:95%;
+    height: 25px;
+    top: calc(97.5% - 25px);
+    left: 2.5%;
+    position: absolute;
+    border-radius: 5px;
+    background-color: rgba(77, 77, 77, 0.618);
+    outline: none; /* Убирает обводку фокуса */
+    border: none; /* Убирает границу кнопки */
+    color:  rgb(255, 255, 255);
+}

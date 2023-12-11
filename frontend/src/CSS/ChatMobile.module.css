@@ -1,0 +1,153 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Предотвращает прокрутку */
+  zoom: 1;
+  touch-action: none; 
+}
+
+.App {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  overflow: hidden;
+}
+
+.upContainer {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Предотвращает прокрутку */
+  zoom: 1;
+  touch-action: none; 
+  position: absolute;
+  z-index: -8;
+
+}
+
+.back {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  background-color: rgba(41, 41, 41, 0);
+  touch-action: none;
+}
+
+.con {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 0px;
+  top: 70px;
+  transition: 0.4s;
+  touch-action: none;
+}
+
+.con.open {
+  width: 70%;
+}
+
+.search {
+  background-color: rgb(23, 23, 23);
+  height: 0px;
+  width: 100%;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 0;
+  transition: 0.3s;
+  overflow: scroll;
+}
+
+.search.open {
+  height: 50%;
+}
+
+.topBar {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: 0.7s;
+  left: 3px;
+  right: 10px;
+  top: 10px;
+}
+
+.logo {
+  width: 50px; /* Задайте желаемую ширину для логотипа */
+  height: auto;
+}
+
+.input {
+  flex: 1; /* Занимает всю доступную ширину */
+  padding: 10px; /* Увеличиваем внутренний отступ */
+  border: 2px solid #333; /* Добавляем обводку */
+  border-radius: 20px; /* Закругление полей ввода */
+  background-color: #fff;
+}
+
+.toggle_button {
+  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  position: absolute;
+  bottom: 20px;
+  border-radius: 10px;
+  right: 20px;
+  transition: 0.2s;
+  width: 90px;
+}
+
+.edit_button {
+  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  position: absolute;
+  bottom: 20px;
+  border-radius: 10px;
+  right: 120px;
+  left: 20px;
+  transition: 0.2s;
+}
+
+.toggle_button.open {
+  bottom: calc(80% + 20px);
+}
+
+.edit_button.open {
+  bottom: calc(80% + 20px);
+}
+
+.separator {
+  border: none;
+  height: 3px;
+  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+  margin: 20px 10px 10px 10px; /* Отступы сверху и снизу */
+  border-radius: 5px; /* Закругление */
+}
+.upMenu{
+  overflow:scroll;
+}
+
+.text2x {
+  color: #63B2EC;
+  margin: 0px 0px 10px 10px;
+  font-size: 13px;
+}
+
+.textx {
+  color: #63B2EC;
+  margin: 0px 0px 10px 10px;
+  font-size: 10px;
+}

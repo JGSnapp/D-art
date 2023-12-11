@@ -1,0 +1,27 @@
+.button {
+    position:absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1100;
+    height: 20px;
+    width: 20px;
+    background-color: #333;
+    color: white;
+    border: none;
+    text-align: center;
+    align-items: center;
+    border-radius: 7px; /* Закругление краев */
+    font-size: 15px; /* Размер шрифта */
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+  }
+
+  .block {
+    z-index: 1000;
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    pointer-events: all;
+    overflow: hidden;
+  }
+  

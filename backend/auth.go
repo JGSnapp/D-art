@@ -22,9 +22,11 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &models.User{
-		MyZones: make([]models.ZoneLite, 0), // Создание пустого массива MyZones
-		Zones:   make([]models.ZoneLite, 0), // Создание пустого массива Zones
+		MyZones: make([]models.ZoneLite, 0), // ???????? ??????? ??????? MyZones
+		Zones:   make([]models.ZoneLite, 0), // ???????? ??????? ??????? Zones
 		Likes:   make([]string, 0),
+		Color1:  "#DB00FF",
+		Color2:  "#0094FF",
 	}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
@@ -44,7 +46,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error checking username", http.StatusInternalServerError)
 			return
 		}
-		http.Error(w, "User already exists", http.StatusBadRequest)
+		http.Error(w, "??? ??? ??????", http.StatusBadRequest)
 		return
 	}
 
@@ -86,14 +88,14 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	dbUser := &models.User{}
 	err = result.Decode(dbUser)
 	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
+		http.Error(w, "???????????? ?? ??????", http.StatusNotFound)
 		return
 	}
 
 	// Compare the hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password))
 	if err != nil {
-		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		http.Error(w, "???????? ??????", http.StatusUnauthorized)
 		return
 	}
 

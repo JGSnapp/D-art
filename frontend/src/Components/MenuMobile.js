@@ -1,20 +1,17 @@
 import styles from '../CSS/MenuMobile.module.css';
 import React, { useState, useEffect } from 'react';
 import ChooseMethodMobile from './ChooseMethodMobile';
-import GPT from './GPT.js'
 import Advanced from './Advanced.js';
 import Library from './LibraryMobile.js'
 import AddZone from './AddZone.js';
 
-const MenuMobile = ({ addBlockTask, toggleMenu, isMenuOpen, addBlock, html, setHtml, css, setCss, js, setJs, patText, 
+const MenuMobile = ({ tags, setTags, addBlockTask, toggleMenu, isMenuOpen, addBlock, html, setHtml, patText, 
     setPatText, askPatText, setAskPatText, givePatterns, popularPatterns, deletePattern, addPattern, 
-    likes, setLikes, patterns, likePattern, unlikePattern, name, addZone, zone, setZone }) => {
+    likes, setLikes, patterns, likePattern, unlikePattern, name, addZone, zone, setZone, color1, color2 }) => {
     const [type, setType] = useState(0);
 
     useEffect(() => {
         setHtml('');
-        setCss('');
-        setJs('');
     }, [type]);
 
     return(
@@ -24,29 +21,29 @@ const MenuMobile = ({ addBlockTask, toggleMenu, isMenuOpen, addBlock, html, setH
             <AddZone 
                 addZone={addZone}
                 zone={zone}
-                setZone={setZone}/>
+                setZone={setZone}
+                color1={color1}
+                color2={color2}
+                tags={tags}
+                setTags={setTags}/>
             <div className={styles.txt} >Добавить блок</div>
-            <ChooseMethodMobile setType={setType}></ChooseMethodMobile>
-            {type==1 && <GPT
-                addBlock={addBlock} 
-                html={html} setHtml={setHtml}
-                toggleMenu={toggleMenu}
-                />}
+            <ChooseMethodMobile 
+            setType={setType}
+            color1={color1}
+            color2={color2} />
             {type==2 && <Advanced 
-                        addBlock={addBlock} 
+                        addBlock={addBlock}
                         html={html} setHtml={setHtml}
-                        css={css} setCss={setCss}
-                        js={js} setJs={setJs} 
                         addPattern={addPattern}
                         patText={patText} setPatText={setPatText}
                         toggleMenu={toggleMenu}
+                        color1={color1}
+                        color2={color2}
                         />}
             </div>
             {type==0 && <Library 
                         addBlockTask={addBlockTask}
                         html={html} setHtml={setHtml}
-                        css={css} setCss={setCss}
-                        js={js} setJs={setJs} 
                         patterns={patterns}
                         likes={likes} SetLikes={setLikes}
                         patText={patText} setPatText={setPatText}

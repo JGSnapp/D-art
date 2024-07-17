@@ -3,17 +3,52 @@ services:
   gpt:
     build: ./gpt
     ports:
-      - "5000:5000"
+      - 9000:9000
+
+  telegram:
+    build: ./telegram
+    ports:
+      - 5000:5000
+
   backend:
     build: ./backend
     ports:
       - 8080:8080
     links:
       - mongo
-  frontend:
-    build: ./frontend
+
+  blocks:
+    build: ./blocks
     ports:
-      - 80:80
+      - 7000:7000
+    links:
+      - mongo
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+      - blocks
+      - gpt
+
+  nginx:
+    build: ./nginx
+    ports:
+      - 443:443
+    depends_on:
+      - frontend
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/certs:/etc/nginx/certs
+    environment:
+      - NGINX_HOST=d-art.space
+      - NGINX_PORT=80
+      - NGINX_SSL_PORT=443
+
   mongo:
     image: mongo
     restart: always

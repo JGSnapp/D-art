@@ -1,12 +1,7 @@
 import React, { useRef, useEffect} from 'react';
 import styles from '../CSS/LibraryDesktop.module.css';
-import styled from 'styled-components';
 
-const StyledContainer = styled.div`
-  ${props => props.dynamicStyles}
-`;
-
-const LibraryDesktop = ({addBlockTask, toggleMenu, setHtml, setCss, setJs, askPatText, setAskPatText, givePatterns, popularPatterns, 
+const LibraryDesktop = ({addBlockTask, toggleMenu, setHtml, askPatText, setAskPatText, givePatterns, popularPatterns, 
   deletePattern, likes, patterns, likePattern, unlikePattern, name}) => {
   const containerRef = useRef(null);
 
@@ -32,6 +27,7 @@ const LibraryDesktop = ({addBlockTask, toggleMenu, setHtml, setCss, setJs, askPa
                 givePatterns(e.target.value);
             }
         }}  />
+        {patterns ?
       <div    
       ref={containerRef}
       onWheel={handleWheel}
@@ -47,22 +43,19 @@ const LibraryDesktop = ({addBlockTask, toggleMenu, setHtml, setCss, setJs, askPa
             author={pattern.author}
             html={pattern.html}
             setHtml={setHtml}
-            css={pattern.css}
-            setCss={setCss}
-            js={pattern.js}
-            setJs={setJs}
             unlikePattern={unlikePattern}
             likePattern={likePattern}
             deletePattern={deletePattern}
             name={name}
             addBlockTask={addBlockTask}
+            type={pattern.type}
           />)}
-      </div>
+      </div> : <p className={styles.text4}>ничего не найдено</p>}
       </div>
   );
 };
 
-const Pattern = ({addBlockTask, toggleMenu, id, content, likes, patLikes, html, setHtml, css, setCss, js, setJs, 
+const Pattern = ({type, addBlockTask, toggleMenu, id, content, likes, patLikes, html, setHtml, 
   unlikePattern, likePattern, deletePattern, author, name}) => {
   
   return (
@@ -72,7 +65,7 @@ const Pattern = ({addBlockTask, toggleMenu, id, content, likes, patLikes, html, 
         <div className={styles.button_row}>
 
               <button className={styles.button1} onClick={() => {
-                addBlockTask(html, js, css);
+                addBlockTask(html, type);
                 }}> 
               <p className={styles.text2}>{content}</p>
               от {author}   
@@ -86,11 +79,10 @@ const Pattern = ({addBlockTask, toggleMenu, id, content, likes, patLikes, html, 
 
         </div>
 
-        <StyledContainer 
-                    dynamicStyles={css}
-                    className={styles.square_block}>
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </StyledContainer>
+        <iframe
+          srcDoc={html}
+          className={styles.square_block}>
+        </iframe>
 
       </div>
   );

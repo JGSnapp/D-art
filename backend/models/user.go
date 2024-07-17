@@ -9,4 +9,6 @@ type User struct {
 	Zones    []ZoneLite         `json:"zones" bson:"zones"`
 	MyZones  []ZoneLite         `json:"myzones" bson:"myzones"`
 	Likes    []string           `json:"likes,omitempty" bson:"likes,omitempty,default:[]"`
+	Color1   string             `json:"color1" bson:"color1"`
+	Color2   string             `json:"color2" bson:"color2"`
 }

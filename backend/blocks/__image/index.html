@@ -1,9 +1,183 @@
-<div id="container" class="container">
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Image Upload</title>
+    <style>
+        /* Include your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        #image-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .image-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -10;
+        }
+
+        #upload-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+            position: absolute;
+            left: 3pt;
+            top: 3pt;
+        }
+
+        .input-file {
+            position: relative;
+            display: inline-block;
+        }
+
+        .input-file span {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            outline: none;
+            text-decoration: none;
+            font-size: 14px;
+            vertical-align: middle;
+            color: rgb(255 255 255);
+            text-align: center;
+            border-radius: 4px;
+            background-color: #181818;
+            line-height: 22px;
+            height: 40px;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            border: none;
+            margin: 0;
+            transition: background-color 0.2s;
+        }
+
+        .input-file input[type=file] {
+            position: absolute;
+            z-index: -1;
+            opacity: 0;
+            display: block;
+            width: 0;
+            height: 0;
+        }
+
+        /* Focus */
+        .input-file input[type=file]:focus+span {
+            box-shadow: 0 0 0 0.2rem 181818;
+        }
+
+        /* Hover/active */
+        .input-file:hover span {
+            background-color: #272727;
+        }
+
+        .input-file:active span {
+            background-color: #272727;
+        }
+
+        /* Disabled */
+        .input-file input[type=file]:disabled+span {
+            background-color: #eee;
+        }
+    </style>
+</head>
+
+<body>
     <form id="upload-form" enctype="multipart/form-data">
         <label class="input-file">
             <input type="file" name="image" accept="image/*" onchange="uploadImage(this)">
-            <span>Добавить/заменить</span>
+            <span>Ð”Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ/Ð·Ð°Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ</span>
         </label>
     </form>
     <div id="image-container"></div>
-</div>
+    <script src="script.js"></script>
+    <script>
+        // Include your JavaScript code here
+        const id = "%%id%%";
+        const name = "%%name%%", author = "%%author%%";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const container = document.getElementById("image-container");
+            const form = document.getElementById("upload-form");
+
+            // Check the condition to display upload elements
+            if (author !== name) {
+                form.style.display = "none";
+            } else {
+                const fileInput = form.querySelector('input[type="file"]');
+                fileInput.addEventListener("change", async (e) => {
+                    try {
+                        const formData = new FormData(form);
+                        const response = await fetch("http://78.40.217.23:7000/upload_image", {
+                            method: "POST",
+                            body: formData,
+                            headers: {
+                                "id": id
+                            }
+                        });
+                        const data = await response.json();
+                        addImageToContainer(data);
+                    } catch (e) {
+                        console.log("no");
+                    }
+                });
+            }
+
+            async function fetchImageById() {
+                try {
+                    const response = await fetch("http://78.40.217.23:7000/ask_image", {
+                        method: "POST",
+                        headers: {
+                            "id": id
+                        }
+                    });
+                    const data = await response.json();
+                    addImageToContainer(data);
+                } catch (e) {
+                    console.log("no");
+                }
+            }
+
+            function addImageToContainer(imageInfo) {
+                container.innerHTML = '';
+
+                const image = document.createElement("img");
+                image.classList.add("image-item");
+                image.src = imageInfo.url;
+                container.appendChild(image);
+            }
+
+            fetchImageById();
+        });
+    </script>
+</body>
+
+</html>

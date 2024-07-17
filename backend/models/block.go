@@ -11,10 +11,9 @@ type Block struct {
 	Width  float64   `json:"width" bson:"width"`
 	Height float64   `json:"height" bson:"height"`
 	HTML   string    `json:"html" bson:"html"`
-	CSS    string    `json:"css" bson:"css"`
-	JS     string    `json:"js" bson:"js"`
 	Time   time.Time `json:"time" bson:"time"`
 	Author string    `json:"author" bson:"author"` // New field: author's name
 	Zone   string    `json:"zone" bson:"zone"`
 	Image  bool      `json:"image" bson:"image"`
+	Type   string    `json:"type" bson:"type"`
 }

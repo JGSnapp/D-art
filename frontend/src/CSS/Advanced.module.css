@@ -9,9 +9,11 @@
     height: 300px;
     max-width: 90%;
     max-height: 70%;
-    background-color: rgb(99, 97, 97);
+    background-color: rgb(255, 255, 255);
     border-radius: 15px;
     margin: 10px;
+    overflow: hidden;
+    border: none;
 }
 
 .textarea {
@@ -27,19 +29,20 @@
 }
 
 .bqq {
-    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
     color: white;
     border: none;
     box-sizing: border-box;
     border-radius: 10px;
     margin-top: 10px; 
     width: 100%; /* Занимает всю доступную ширину */
+    max-width: 90%; /* Занимает всю доступную ширину */
     height: 30px; /* Учитывает padding и border в общей высоте элемента */
 }
 
 .vvod {
     display: flex;
     width: 100%; /* Занимает всю доступную ширину */
+    max-width: 90%;/* Занимает всю доступную ширину */
     height: 30px;
     margin-top: 10px; 
 }
@@ -53,8 +56,15 @@
     margin-right: 10px; 
 }
 
+.bqq3 {
+    color: white;
+    border: none;
+    height: 90%; /* Занимает всю высоту flex-контейнера */
+    width: 60px;
+    box-sizing: border-box;
+    border-radius: 10px; /* Учитывает padding и border в общей высоте элемента */
+}
 .bqq2 {
-    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
     color: white;
     border: none;
     height: 90%; /* Занимает всю высоту flex-контейнера */
@@ -62,3 +72,15 @@
     box-sizing: border-box;
     border-radius: 10px; /* Учитывает padding и border в общей высоте элемента */
 }
+
+.txt {
+    left: 0px;
+    font-family: 'Tenor Sans', sans-serif;
+    font-size: 10px;
+    color: #787878;
+    letter-spacing: 2px;
+    line-height: 1.4em;
+    text-transform: uppercase;
+    margin-top: 20px; 
+    margin-bottom: 10px; 
+ }

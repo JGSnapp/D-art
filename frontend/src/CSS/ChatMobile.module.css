@@ -14,6 +14,16 @@ html {
   width: 100%;
   position: absolute;
   overflow: hidden;
+  touch-action: none;
+}
+
+.App2 {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  overflow: hidden;
+  z-index: 3000;
+  pointer-events: none;
 }
 
 .upContainer {
@@ -81,9 +91,20 @@ html {
 }
 
 .logo {
-  width: 50px; /* Задайте желаемую ширину для логотипа */
+  width: 40px; /* Задайте желаемую ширину для логотипа */
   height: auto;
 }
+
+.button_svg * {
+  color: white;
+  fill: white;
+}
+
+.button_svg {
+  width: 20px; /* Задайте желаемую ширину для логотипа */
+  height: auto;
+}
+
 
 .input {
   flex: 1; /* Занимает всю доступную ширину */
@@ -94,7 +115,6 @@ html {
 }
 
 .toggle_button {
-  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -103,12 +123,21 @@ html {
   bottom: 20px;
   border-radius: 10px;
   right: 20px;
+  height: 35px;
+  width: 35px;
   transition: 0.2s;
-  width: 90px;
+  display: flex;
+  align-items: center; /* Выравнивание по вертикали */
+  justify-content: center; /* Выравнивание по горизонтали */
+}
+
+.button_content {
+  display: flex;
+  align-items: center; /* Выравнивание по вертикали */
+  justify-content: center; /* Выравнивание по горизонтали */
 }
 
 .edit_button {
-  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -116,7 +145,7 @@ html {
   position: absolute;
   bottom: 20px;
   border-radius: 10px;
-  right: 120px;
+  right: 75px;
   left: 20px;
   transition: 0.2s;
 }
@@ -132,7 +161,6 @@ html {
 .separator {
   border: none;
   height: 3px;
-  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
   margin: 20px 10px 10px 10px; /* Отступы сверху и снизу */
   border-radius: 5px; /* Закругление */
 }

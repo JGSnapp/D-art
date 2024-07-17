@@ -10,8 +10,8 @@
     border: none;
     text-align: center;
     align-items: center;
-    border-radius: 7px; /* Закругление краев */
-    font-size: 15px; /* Размер шрифта */
+    border-radius: 7px; /* ??????????? ????? */
+    font-size: 15px; /* ?????? ?????? */
     font-family: 'Roboto', sans-serif;
     cursor: pointer;
   }
@@ -25,3 +25,8 @@
     overflow: hidden;
   }
   
+.container {
+  height: 100%;
+  width: 100%;
+  border: none;
+}

@@ -1,76 +1,40 @@
 import React, { useEffect, useRef } from 'react';
 import interact from 'interactjs';
 import styles from '../CSS/Block.module.css';
+import HTML from './HTMLFromServer';
+import EasyImage from './EasyImage';
+import EasyText from './EasyText';
 
-const Block = ({
-    coords, html, js, css, isEdit, id, width, height, room, author, name,
-    removeBlock, moveBlock, moveBlockTo, CHUNKSIZE, ready, scaleRef
-}) => {
+const Block = React.memo(function Block({
+    coords, html, isEdit, id, width, height, room, author, name,
+    removeBlock, moveBlock, moveBlockTo, CHUNKSIZE, ready, scaleRef, type
+}) {
     const blockRef = useRef(null);
-    const outputRef = useRef(null);
 
     const roomsAreEqual = (room1, room2) => {
         return room1.x === room2.x && room1.y === room2.y;
     };
 
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-          try {
-            // Создаем blob-объект для CSS
-            const cssBlob = new Blob([css], { type: 'text/css' });
-            const cssUrl = URL.createObjectURL(cssBlob);
-    
-            // Вставляем содержимое, если outputRef.current существует
-            if (outputRef.current) {
-              outputRef.current.innerHTML = html; // Вставляем HTML
-    
-              // Вставляем CSS через <link>
-              const linkElement = document.createElement('link');
-              linkElement.rel = 'stylesheet';
-              linkElement.href = cssUrl;
-              outputRef.current.appendChild(linkElement);
-            }
-    
-            // Выполняем JS-код
-            const executeJs = new Function(js);
-            executeJs();
-    
-            return () => {
-              URL.revokeObjectURL(cssUrl);
-            };
-          } catch (error) {
-            console.error('Ошибка при выполнении кода:', error);
-          }
-        }, 300);
-    
-        return () => clearTimeout(timeoutId);
-      }, [html, css, js]);
-      
+        console.log('block');
 
-    useEffect(() => {
-        if (!blockRef.current) {
-            return;
-        }
-
-        const target = blockRef.current;
-
-        interact(target)
+        interact(blockRef.current)
             .draggable({
                 listeners: {
                     move: event => {
                         ready.current= false;
                         if (!isEdit) return;
-                        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx / scaleRef.current;
-                        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy / scaleRef.current;
-                        target.style.transform = `translate(${x}px, ${y}px)`;
-                        target.setAttribute('data-x', x);
-                        target.setAttribute('data-y', y);
+                        const x = (parseFloat(blockRef.current.getAttribute('data-x')) || 0) + event.dx / scaleRef.current;
+                        const y = (parseFloat(blockRef.current.getAttribute('data-y')) || 0) + event.dy / scaleRef.current;
+                        blockRef.current.style.transform = `translate(${x}px, ${y}px)`;
+                        blockRef.current.setAttribute('data-x', x);
+                        blockRef.current.setAttribute('data-y', y);
                     },
                     end: () => {
                         ready.current= true;
                         if (!isEdit) return;
-                        const x = parseFloat(target.getAttribute('data-x')) || 0;
-                        const y = parseFloat(target.getAttribute('data-y')) || 0;
+                        const x = parseFloat(blockRef.current.getAttribute('data-x')) || 0;
+                        const y = parseFloat(blockRef.current.getAttribute('data-y')) || 0;
                         let newRoom = {
                             x: Math.floor(x / CHUNKSIZE),
                             y: Math.floor(y / CHUNKSIZE)
@@ -96,12 +60,12 @@ const Block = ({
                     move: event => {
                         if (!isEdit) return;
                         ready.current= false;
-                        target.style.width = event.rect.width / scaleRef.current + 'px';
-                        target.style.height = event.rect.height / scaleRef.current + 'px';
+                        blockRef.current.style.width = event.rect.width / scaleRef.current + 'px';
+                        blockRef.current.style.height = event.rect.height / scaleRef.current + 'px';
                     },
                     end: event => {
                         if (!isEdit) return;
-                        moveBlock(id, {x: parseFloat(target.getAttribute('data-x')), y: parseFloat(target.getAttribute('data-y'))}, event.rect.width / scaleRef.current, event.rect.height / scaleRef.current, room);
+                        moveBlock(id, {x: parseFloat(blockRef.current.getAttribute('data-x')), y: parseFloat(blockRef.current.getAttribute('data-y'))}, event.rect.width / scaleRef.current, event.rect.height / scaleRef.current, room);
                         ready.current= true;
                     }
                 },
@@ -116,11 +80,11 @@ const Block = ({
           style={{
             transform: `translate(${coords.x}px, ${coords.y}px)`,
             position: 'absolute',
-            width: `${width}px`, // Убрать +4
-            height: `${height}px`, // Убрать +4
+            width: `${width}px`, // ?????? +4
+            height: `${height}px`, // ?????? +4
             zIndex: 5,
             borderRadius: '5px',
-            border: isEdit ? '2px solid #333' : 'none', // Добавить рамку при необходимости
+            border: isEdit ? '2px solid #333' : 'none', // ???????? ????? ??? ?????????????
           }}
           data-x={coords.x}
           data-y={coords.y}
@@ -130,14 +94,29 @@ const Block = ({
               x
             </button>
           )}
-      <div className={styles.container} 
-      styles={{  position: 'absolute',
+            {type == 'usual' &&
+            <iframe
+            srcDoc={html}
+            loading="lazy"
+            style={{  
+            position: 'absolute',
             top: isEdit ? '-2px' : '0px',
-            left: isEdit ? '-2px' : '0px',}} 
-            ref={outputRef} />
+            left: isEdit ? '-2px' : '0px',
+            pointerEvents: isEdit ? 'none' : 'all',
+            height: '100%',
+            width: '100%',
+            border: 'none',
+            }}>
+            </iframe>
+            }     
+            {type == 'easy image' &&
+                <EasyImage html={html} isEdit={isEdit}/>
+            } 
+            {type == 'easy text' &&
+                <EasyText html={html} isEdit={isEdit}/>
+            }       
         </div>
-      );
-      
-}
+      ); 
+});
 
 export default Block;

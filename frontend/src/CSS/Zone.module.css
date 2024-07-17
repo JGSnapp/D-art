@@ -11,48 +11,48 @@
   z-index: 20;
 }
   .leave_button {
-    background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+    background-color: linear-gradient(45deg, #0094FF, #DB00FF);
     color: white; 
 }
 .toggle_button {
-  background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+  background-color: linear-gradient(45deg, #0094FF, #DB00FF);
   color: white; 
 }
 
 
 .leave_button:hover {
-    background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+    background-color: linear-gradient(45deg, #0094FF, #DB00FF);
 }
 
 .sub_button {
-    background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+    background-color: linear-gradient(45deg, #0094FF, #DB00FF);
     color: white; 
 }
 
 .sub_button:hover {
-    background-color:linear-gradient(45deg, #63B2EC, #E356FA);
+    background-color:linear-gradient(45deg, #0094FF, #DB00FF);
 }
 
 .delete_button {
-    background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+    background-color: linear-gradient(45deg, #0094FF, #DB00FF);
     color: white; 
 }
 
 .delete_button:hover {
-    background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+    background-color: linear-gradient(45deg, #0094FF, #DB00FF);
 }
 
 .delete_button_block {
   position: absolute;
   right: 0;
-  background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+  background-color: linear-gradient(45deg, #0094FF, #DB00FF);
   color: white; 
 }
 
 .delete_button_block:hover {
   position: absolute;
   right: 0;
-  background-color: linear-gradient(45deg, #63B2EC, #E356FA);
+  background-color: linear-gradient(45deg, #0094FF, #E356FA);
 }
 
 .container_info{
@@ -69,15 +69,32 @@
   align-items: center;
   flex-direction: row;
   border-radius: 20px;
-  background-color:  linear-gradient(45deg, #63B2EC, #E356FA);
+  background-color:  linear-gradient(45deg, #0094FF, #DB00FF);
   min-height: 25px;
   font-size: 15px;
+  pointer-events: all;
 }
 
 .button {
   z-index: 1100;
   height: 30px;
-  width: 30px;
+  max-width: 30px;
+  background-color: #333;
+  color: white;
+  border: none;
+  text-align: center;
+  align-items: center;
+  border-radius: 10px; /* Закругление краев */
+  font-size: 20px; /* Размер шрифта */
+  font-family: 'Roboto', sans-serif;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.button12 {
+  z-index: 1100;
+  height: 30px;
+  max-width: 300px;
   background-color: #333;
   color: white;
   border: none;
@@ -107,6 +124,15 @@
   margin-bottom: 10px; 
   margin-top: 20px;
 }
+
+.text2 {
+  color: rgb(138, 138, 138);
+  font-size: 15px; 
+  margin-left: 5px; 
+  margin-bottom: 10px; 
+  margin-top: 20px;
+}
+
 .max_text {
   color: rgb(138, 138, 138);
   font-size: 25px; 
@@ -156,7 +182,7 @@
 }
 
 .Xbutton {
-    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+    background-image: linear-gradient(45deg, #0094FF, #DB00FF);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -167,20 +193,19 @@
     right: 20px;
     transition: 0.4s;
     font-family: 'Roboto', sans-serif;
+    margin-top: 20px
 }
 
 .Xbutton1 {
-  background-color: rgb(148, 12, 12);
+  background-color: rgb(153, 93, 93);
   color: white;
   border: none;
   padding: 10px 20px;
   cursor: pointer;
-  position: absolute;
-  bottom: 20px;
   border-radius: 10px;
-  left: 20px;
   transition: 0.4s;
   font-family: 'Roboto', sans-serif;
+  margin-top: 20px
 }
 
 .Xbutton3 {
@@ -192,6 +217,18 @@
   border-radius: 10px;
   transition: 0.4s;
   font-family: 'Roboto', sans-serif;
+  margin-top: 20px
+}
+.Xbutton4 {
+  background-color: rgb(242, 0, 255);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: 0.4s;
+  font-family: 'Roboto', sans-serif;
+  margin-top: 20px
 }
 
 .upload {
@@ -208,3 +245,35 @@
 
 .colour_picker {  display: flex;
   justify-content: center; /* Центрирование по горизонтали */}
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+    width: 100%;
+  }
+  
+  .input {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+
+  .wordStyle {
+    background-color: #d3d3d3;
+    border-radius: 8px;
+    padding: 5px 10px;
+    margin: 5px;
+    display: inline-block;
+}
+
+.wordListContainer {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+}
+
+.wordList {
+  display: flex;
+  flex-wrap: wrap; /* Allow words to wrap to the next line if they exceed the width */
+}

@@ -3,20 +3,19 @@ import axios from 'axios';
 import myImage from '../images/full.png';
 import styles from '../CSS/Login.module.css';
 
-function Login({ setJwt, setReg, setName }) {
+function Login({ setJwt, setReg, name }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async e => {
     e.preventDefault();
     try {
-      //const res = await axios.post('http://77.232.128.152:8080/login', {
-      const res = await axios.post('http://192.168.0.117:8080/login', {
+      const res = await axios.post('https://d-art.space/backend/login', {
         username,
         password,
       });
       setJwt(res.data.token);
-      setName(username);
+      name.current = username;
       localStorage.setItem('username', username);
       localStorage.setItem('password', password);
       console.log(res.data.token)
@@ -27,24 +26,24 @@ function Login({ setJwt, setReg, setName }) {
 
   const handleLogin2 = async (storedUsername, storedPassword) => {
     try {
-      //const res = await axios.post('http://77.232.128.152:8080/login', {
-      const res = await axios.post('http://192.168.0.117:8080/login', {
+      const res = await axios.post('https://d-art.space/backend/login', {
         username: storedUsername,
         password: storedPassword,
       });
       setJwt(res.data.token);
-      setName(storedUsername);
+      name.current = storedUsername;
       console.log(res.data.token)
     } catch (err) {
       console.error(err);
     }
   };
-
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
     const storedPassword = localStorage.getItem('password');
 
-    if (storedUsername && storedPassword) {
+    if (storedUsername != null && storedPassword != null) {
+      console.log(storedUsername);
+      console.log(storedPassword);
       handleLogin2(storedUsername, storedPassword);
     }
   }, []);

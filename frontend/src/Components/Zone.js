@@ -3,18 +3,46 @@ import interact from 'interactjs';
 import styles from '../CSS/Zone.module.css';
 import { HexColorPicker } from "react-colorful";
 
-const Zone = ({ 
-    coords, content, isEdit, id, width, height, room, author, name, subZones,
-    removeZone, moveZone, moveZoneTo, subZone, leaveZone,
-    CHUNKSIZE, startcolor, updateColor, updateFile, ready, scaleRef
-}) => {
+const WordList = ({ words }) => {
+    return (
+      <div className={styles.wordListContainer}>
+        {!(words === undefined || words === null) && (
+          <div className={styles.wordList}>
+            {words.map((word, index) => (
+              <div key={index} className={styles.wordStyle}>
+                <span>{word}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  
+  const Zone = React.memo(function Zone({
+    coords, content, isEdit, id, width, height, room, author, name, subZones, editUser,
+    removeZone, moveZone, moveZoneTo, subZone, leaveZone, deleteMyself,
+    CHUNKSIZE, startcolor, updateColor, updateFile, ready, scaleRef, color1, color2, updateColors, setAdmin, tags
+}) {
     const blockRef = useRef(null);
     const firstRenderRef = useRef(true);
     const [color, setColor] = useState(`${startcolor}`);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [imgShow, setImgShow] = useState(true);
+    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
 
-    const shouldInteract = () => isEdit && !isMenuOpen && author === name;
+    const userChange = async e => {
+        e.preventDefault();
+        editUser(password, username);
+      };
+
+    useEffect(() => {
+        console.log(`isEdit: ${isEdit}`);
+      }, [isEdit]);
+
+      const shouldInteract = () => isEdit && !isMenuOpen && author === name;
 
     const roomsAreEqual = (room1, room2) => {
       return room1.x === room2.x && room1.y === room2.y;
@@ -42,7 +70,7 @@ const handleFileChange = (event) => {
 
 
     useEffect(() => {
-        if (!blockRef.current) return;
+        console.log("zone");
 
         const target = blockRef.current;
 
@@ -50,8 +78,10 @@ const handleFileChange = (event) => {
             .draggable({
                 listeners: {
                     move: event => {
-                        if(isMenuOpen){ready.current = false;}
+                        console.log("try")
+                        if(isMenuOpen || id == '.settings'){ready.current = false;}
                         if (!shouldInteract()) return;
+                        console.log("hard")
                         ready.current = false;
                         const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx / scaleRef.current;
                         const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy / scaleRef.current;
@@ -60,6 +90,8 @@ const handleFileChange = (event) => {
                         target.setAttribute('data-y', y);
                     },
                     end: event => {
+                        ready.current = true;
+                        console.log("f")
                         if (!shouldInteract()) return;
                         const x = parseFloat(target.getAttribute('data-x')) || 0;
                         const y = parseFloat(target.getAttribute('data-y')) || 0;
@@ -72,7 +104,6 @@ const handleFileChange = (event) => {
                         } else {
                             moveZoneTo(id, { x, y }, content, width, height, newRoom, room);
                         }
-                        ready.current = true;
                     }
                 },
                 inertia: true
@@ -91,9 +122,9 @@ const handleFileChange = (event) => {
                         target.style.height = `${event.rect.height / scaleRef.current}px`;
                     },
                     end: event => {
+                        ready.current = true;
                         if (!shouldInteract()) return;
                       moveZone(id, {x: parseFloat(target.getAttribute('data-x')), y: parseFloat(target.getAttribute('data-y'))},content, event.rect.width / scaleRef.current, event.rect.height / scaleRef.current, room);
-                      ready.current = true;
                     }
                 },
                 inertia: true
@@ -112,12 +143,13 @@ const handleFileChange = (event) => {
             borderRadius: 10,
             backgroundColor: color, // используйте переменную color,
             zIndex: !isMenuOpen ? ((isEdit && author !== name) ? 10 : 0) : 10,
+           pointerEvents: ((isMenuOpen || isEdit) && author == name) || id == '.settings' ? "all" : "none",
           }}
           data-x={coords.x} 
           data-y={coords.y}
       >
 
-            { imgShow && <img src={`http://192.168.0.117:8080/images/${id}`} 
+            { imgShow && <img src={`https://d-art.space/backend/images/${id}`} 
             alt="" 
             onError={() => {
                 setImgShow(false)
@@ -167,13 +199,46 @@ const handleFileChange = (event) => {
         {id == '.settings' && 
         <div className={styles.settings}>
                 <div className={styles.max_text}>Настройки</div>
-                <button  className={styles.Xbutton3} 
+                <h1 className={styles.text}>Задний фон</h1>
+                <h1 className={styles.text2}>Основной цвет</h1>
+                <HexColorPicker color={color1} onChange={(color) => updateColors(id, color, color2)} />
+                <h1 className={styles.text2}>Дополнительный цвет</h1>
+                <HexColorPicker color={color2} onChange={(color) => updateColors(id, color1, color)} />
+            <label className={styles.upload}>
+                <span>Загрузить</span>
+                <input
+                    type="file"
+                    name="back"
+                    accept="image/jpeg, image/png"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                />
+            </label>  
+            <h1 className={styles.text}>Аккаунт</h1>
+            <h1 className={styles.text}>Изменить аккаунт</h1>
+            <form className={styles.form} onSubmit={userChange}>
+                <input className={styles.input} value={username} onChange={e => setUsername(e.target.value)} placeholder="Имя" required />
+                <input className={styles.input} value={password} onChange={e => setPassword(e.target.value)} placeholder="Пароль" required />
+                <button className={styles.button12}>Изменить</button>
+            </form>
+            <button  className={styles.Xbutton1} 
                 onClick={() => {
                     localStorage.removeItem('password');
                     localStorage.removeItem('username');
                     window.location.reload(true);
                 }}>
                      Выйти из аккаунта </button>
+
+                     <button  className={styles.Xbutton3} 
+                onClick={() => {
+                    deleteMyself();
+                }}>
+                     Удалить аккаунт </button>
+                {name == "D'art" && <button  className={styles.Xbutton4} 
+                onClick={() => {
+                    setAdmin(true);
+                }}>
+                     Супер Кнопка </button>}
             </div>
               }
 
@@ -183,7 +248,8 @@ const handleFileChange = (event) => {
               <div className={styles.name}> {content} </div>
               
               {id !== '.settings' &&
-              (author !== name ?
+              <div>
+              {(author !== name ?
                   <div>
                       {(subZones.some(zone => zone.id === id)) ?
                           <button className={styles.button} onClick={() => leaveZone(id)}> - </button>:
@@ -191,12 +257,19 @@ const handleFileChange = (event) => {
                   </div>:
                   <button  className={styles.button} onClick={() => {
                     setIsMenuOpen(true);
-                }}> ⚙ </button>)}
+                }}> ⚙ </button>)} 
+                </div>
+                }
                </div>
           </div>
+          <WordList
+                styles={{
+                    margin: "10px"
+                }}
+                words={tags}></WordList>
           </div>
       </div>
   );
-}
+});
 
 export default Zone;

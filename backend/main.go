@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"backend/models"
@@ -21,6 +23,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	smtpHost    = "smtp.example.com"
+	smtpPort    = "587"
+	senderEmail = "auth@d-art.space"
+	password    = "oDem7p+OZy-xSG"
 )
 
 var connections = make(map[*websocket.Conn]*models.Connect)
@@ -43,27 +53,27 @@ func main() {
 			panic(err)
 		}
 	}()
-	// Ваш массив идентификаторов
+	// ??? ?????? ???????????????
 	//idArray := []string{}
-	idArray := []string{"__text", "__image"}
+	idArray := []string{"__count", "__text", "__image"}
 	log.Println("ggggggggggggge")
 
-	// Проход по массиву идентификаторов
+	// ?????? ?? ??????? ???????????????
 	for _, id := range idArray {
-		// Проверка наличия элемента с данным id
+		// ???????? ??????? ???????? ? ?????? id
 		collection := client.Database("chat").Collection("patterns")
 		filter := bson.M{"id": id}
 		var result *models.Pattern
 		err := collection.FindOne(context.Background(), filter).Decode(&result)
 		if err == mongo.ErrNoDocuments {
 			log.Println("sss")
-			// Элемент отсутствует, обработка
+			// ??????? ???????????, ?????????
 
-			// Поиск дочерней папки
+			// ????? ???????? ?????
 			subFolderPath := filepath.Join("./blocks", id)
 			if _, err := os.Stat(subFolderPath); err == nil {
-				// Чтение файлов
-				fileExtensions := []string{"script.js", "styles.css", "index.html", "name.txt"}
+				// ?????? ??????
+				fileExtensions := []string{"name.txt"}
 				var fileContents []string
 
 				for _, file := range fileExtensions {
@@ -76,15 +86,14 @@ func main() {
 					fileContents = append(fileContents, string(content))
 				}
 
-				// Запись содержимого в базу данных
+				// ?????? ??????????? ? ???? ??????
 				document := models.Pattern{
 					ID:      id,
-					JS:      fileContents[0],
-					CSS:     fileContents[1],
-					HTML:    fileContents[2],
 					Author:  "D`art",
-					Content: fileContents[3],
+					Content: fileContents[0],
 					Likes:   100,
+					Type:    fileContents[0],
+					HTML:    `__id__;__author__;__name__`,
 				}
 				_, err := collection.InsertOne(context.Background(), document)
 				if err != nil {
@@ -104,7 +113,7 @@ func main() {
 	err := collection.FindOne(context.Background(), filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
 		log.Println("ddddddddddddd")
-		// Запись содержимого в базу данных
+		// ?????? ??????????? ? ???? ??????
 		document := models.Zone{
 			ID: ".settings",
 			Coords: models.Coords{
@@ -139,9 +148,10 @@ func main() {
 	}
 
 	filter = bson.M{"id": ".info"}
+	a := []string{"info", "??????????", "D'art"}
 	err = collection.FindOne(context.Background(), filter).Decode(&result)
 	if err == mongo.ErrNoDocuments {
-		// Запись содержимого в базу данных
+		// ?????? ??????????? ? ???? ??????
 		document := models.Zone{
 			ID: ".info",
 			Coords: models.Coords{
@@ -158,6 +168,7 @@ func main() {
 			Author:  "D'art",
 			Time:    time.Now(),
 			Color:   "#a380db",
+			Tags:    a,
 		}
 		_, err := collection.InsertOne(context.Background(), document)
 		if err != nil {
@@ -175,47 +186,13 @@ func main() {
 		log.Println("Error finding document:", err)
 	}
 
-	collection = client.Database("chat").Collection("blocks")
-	filter = bson.M{"id": ".info_block_1"}
-	var result1 *models.Block
-	err = collection.FindOne(context.Background(), filter).Decode(&result1)
-	if err == mongo.ErrNoDocuments {
-		// Запись содержимого в базу данных
-		document := models.Block{
-			ID: ".info_block_1",
-			Coords: models.Coords{
-				X: 100,
-				Y: 100,
-			},
-			Room: models.Coords{
-				X: 0,
-				Y: 0,
-			},
-			Width:  600,
-			Height: 600,
-			HTML:   "ВАЖНАЯ ИНФОРМАЦИЯ!!!",
-			CSS:    "",
-			JS:     "",
-			Author: "D'art",
-			Time:   time.Now(),
-		}
-		_, err := collection.InsertOne(context.Background(), document)
-		if err != nil {
-			log.Println("Error inserting document:", err)
-		} else {
-			fmt.Println("Document inserted: settings")
-		}
-	} else if err != nil {
-		log.Println("Error finding document:", err)
-	}
-
 	r := mux.NewRouter()
 
 	r.HandleFunc("/ws", authMiddleware(handleConnections))
 	r.HandleFunc("/register", handleRegister).Methods("POST")
 	r.HandleFunc("/login", handleLogin).Methods("POST")
 	r.HandleFunc("/upload_image", uploadImageHandler).Methods("POST")
-	r.HandleFunc("/uload_back", uploadBackHandler).Methods("POST")
+	r.HandleFunc("/upload_back", uploadBackHandler).Methods("POST")
 	r.HandleFunc("/upload_ava", uploadAvaHandler).Methods("POST")
 
 	currentDir, _ := os.Getwd()
@@ -308,21 +285,39 @@ func handleMessages(conn *websocket.Conn) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Caught a panic: %v", r)
-			deleteClient(conn, nil)
+			deleteClient(conn)
 		}
 	}()
 	for {
 		var msg models.Message
+		var adminMsg models.AdminMessage
+
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error occurred while reading message: %v", err)
 			log.Printf("essss: %v", err)
-			deleteClient(conn, nil)
+			deleteClient(conn)
 			return
 		}
+
 		author := connections[conn].Username
-		msg.Author = author
-		msg.Time = time.Now()
+		isAdmin := (author == "D'art")
+
+		if isAdmin && strings.Contains(msg.Type, "admin") {
+			err := conn.ReadJSON(&adminMsg)
+			if err != nil {
+				log.Printf("error occurred while reading message: %v", err)
+				log.Printf("essss: %v", err)
+				deleteClient(conn)
+				return
+			}
+			adminMsg.Time = time.Now()
+		} else {
+			msg.Author = author
+			msg.Time = time.Now()
+		}
+		log.Printf("msg: %v", msg)
+		log.Printf("adminMsg: %v", adminMsg)
 
 		switch msg.Type {
 		case "mylikes":
@@ -334,7 +329,7 @@ func handleMessages(conn *websocket.Conn) {
 
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -345,17 +340,16 @@ func handleMessages(conn *websocket.Conn) {
 			}
 			if err = conn.WriteJSON(message); err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
 		case "addpattern":
 			puttern := models.Pattern{
 				HTML:    msg.HTML,
-				CSS:     msg.CSS,
-				JS:      msg.JS,
 				Author:  author,
 				Content: msg.Content,
+				Type:    "usual",
 			}
 			log.Printf("a")
 
@@ -368,7 +362,7 @@ func handleMessages(conn *websocket.Conn) {
 			err = result.Decode(existingUser)
 			if err != mongo.ErrNoDocuments {
 				log.Printf("sssssss")
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			log.Printf("c")
@@ -377,7 +371,7 @@ func handleMessages(conn *websocket.Conn) {
 
 			if err != nil {
 				log.Printf("error occurred while saving message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				log.Printf("ffffffffffff")
 				break
 			}
@@ -392,7 +386,7 @@ func handleMessages(conn *websocket.Conn) {
 			_, err = collection.UpdateOne(ctx, filter, update)
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			log.Printf("e")
@@ -404,7 +398,7 @@ func handleMessages(conn *websocket.Conn) {
 			_, err := collection.DeleteOne(ctx, filter)
 			if err != nil {
 				log.Printf("error occurred while deleting block: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			log.Printf("aaaa")
@@ -414,7 +408,7 @@ func handleMessages(conn *websocket.Conn) {
 			_, err = collection.UpdateMany(ctx, filter, update)
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				return
 			}
 
@@ -436,20 +430,20 @@ func handleMessages(conn *websocket.Conn) {
 				},
 			}
 
-			opts := options.Find().SetLimit(40) // Ограничиваем вывод до 100 документов
+			opts := options.Find().SetLimit(40) // ???????????? ????? ?? 100 ??????????
 
 			var results []models.Pattern
 
 			cursor, err := collection.Find(ctx, filter, opts)
 			if err != nil {
 				log.Printf("error occurred while finding zones: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
 			if err := cursor.All(ctx, &results); err != nil {
 				log.Printf("error occurred while reading zones: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -460,7 +454,7 @@ func handleMessages(conn *websocket.Conn) {
 
 			if err = conn.WriteJSON(message); err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 		case "popularpatterns":
@@ -477,13 +471,13 @@ func handleMessages(conn *websocket.Conn) {
 			cursor, err := collection.Find(ctx, bson.D{}, opts)
 			if err != nil {
 				log.Printf("error occurred while finding zones: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
 			if err := cursor.All(ctx, &results); err != nil {
 				log.Printf("error occurred while reading zones: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -494,7 +488,7 @@ func handleMessages(conn *websocket.Conn) {
 
 			if err = conn.WriteJSON(message); err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -505,8 +499,8 @@ func handleMessages(conn *websocket.Conn) {
 			updatez := bson.M{"$push": bson.M{"likes": msg.ID}}
 			_, err = collection.UpdateOne(ctx, filter, updatez)
 			if err != nil {
-				log.Printf("Лerror occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				log.Printf("?error occurred while updating message: %v", err)
+				deleteClient(conn)
 				break
 			}
 			collection = client.Database("chat").Collection("patterns")
@@ -514,7 +508,7 @@ func handleMessages(conn *websocket.Conn) {
 			update1 := bson.D{{Key: "$inc", Value: bson.D{{Key: "likes", Value: 1}}}}
 			_, err := collection.UpdateOne(ctx, filter, update1)
 			if err != nil {
-				log.Printf("error occurred whileйй updating message: %v", err)
+				log.Printf("error occurred while?? updating message: %v", err)
 				break
 			}
 
@@ -526,7 +520,7 @@ func handleMessages(conn *websocket.Conn) {
 			_, err = collection.UpdateOne(ctx, filter, update)
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			collection = client.Database("chat").Collection("patterns")
@@ -546,25 +540,26 @@ func handleMessages(conn *websocket.Conn) {
 			defer cancel()
 
 			filter := bson.M{
-				"content": bson.M{
-					"$regex": primitive.Regex{Pattern: searchInput, Options: "i"},
+				"$or": []bson.M{
+					{"content": bson.M{"$regex": primitive.Regex{Pattern: searchInput, Options: "i"}}},
+					{"tags": bson.M{"$regex": primitive.Regex{Pattern: searchInput, Options: "i"}}},
 				},
 			}
 
-			opts := options.Find().SetLimit(40) // Ограничиваем вывод до 100 документов
+			opts := options.Find().SetLimit(40) // ???????????? ????? ?? 100 ??????????
 
 			var results []models.Zone
 
 			cursor, err := collection.Find(ctx, filter, opts)
 			if err != nil {
 				log.Printf("error occurred while finding zones: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
 			if err := cursor.All(ctx, &results); err != nil {
 				log.Printf("error occurred while reading zones: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -584,7 +579,7 @@ func handleMessages(conn *websocket.Conn) {
 
 			if err = conn.WriteJSON(message); err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 		case "tpto":
@@ -608,7 +603,7 @@ func handleMessages(conn *websocket.Conn) {
 
 			if err = conn.WriteJSON(message); err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -620,7 +615,7 @@ func handleMessages(conn *websocket.Conn) {
 			err = result.Decode(dbUser)
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			myZones := dbUser.MyZones
@@ -630,7 +625,7 @@ func handleMessages(conn *websocket.Conn) {
 			}
 			if err = conn.WriteJSON(message); err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 		case "litezones":
@@ -641,7 +636,7 @@ func handleMessages(conn *websocket.Conn) {
 			err = result.Decode(dbUser)
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			zones := dbUser.Zones
@@ -651,7 +646,7 @@ func handleMessages(conn *websocket.Conn) {
 			}
 			if err = conn.WriteJSON(message); err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -659,7 +654,7 @@ func handleMessages(conn *websocket.Conn) {
 			room, joined := rooms[msg.Room]
 			if !joined {
 				conn.WriteJSON(map[string]string{"error": "you are not in the room"})
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			log.Printf("q")
@@ -669,12 +664,10 @@ func handleMessages(conn *websocket.Conn) {
 				Width:  msg.Width,
 				Height: msg.Height,
 				HTML:   msg.HTML,
-				CSS:    msg.CSS,
-				JS:     msg.JS,
 				Time:   msg.Time,
 				Author: msg.Author,
+				Type:   msg.TypeBlock,
 			}
-
 			rms := []*models.Room{}
 			log.Printf("qwff")
 			coords := []models.Coords{
@@ -702,6 +695,9 @@ func handleMessages(conn *websocket.Conn) {
 					break
 				}
 			}
+			if isAdmin {
+				con = true
+			}
 			if con {
 				log.Printf("qagrrrrrrrrrgggrrrrrrrrrrrrrrrvvvvvvvvvvvvvvvvvvvv")
 				ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
@@ -710,7 +706,7 @@ func handleMessages(conn *websocket.Conn) {
 
 				if err != nil {
 					log.Printf("error occurred while saving message: %v", err)
-					deleteClient(conn, nil)
+					deleteClient(conn)
 					break
 				}
 
@@ -722,7 +718,7 @@ func handleMessages(conn *websocket.Conn) {
 				_, err = collection.UpdateOne(ctx, filter, update)
 				if err != nil {
 					log.Printf("error occurred while updating message: %v", err)
-					deleteClient(conn, nil)
+					deleteClient(conn)
 					break
 				}
 
@@ -736,6 +732,7 @@ func handleMessages(conn *websocket.Conn) {
 				room = &models.Room{Coords: msg.Room}
 				rooms[msg.Room] = room
 			}
+			room = rooms[msg.Room]
 			// Check if user has already joined the room
 			errcheck := false
 			for _, client := range room.Clients {
@@ -751,34 +748,33 @@ func handleMessages(conn *websocket.Conn) {
 			blocks, err := getBlocksFromRoom(msg.Room)
 			if err != nil {
 				log.Printf("error occurred while getting blocks: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			zones, err := getZonesFromRoom(msg.Room)
 			if err != nil {
 				log.Printf("error occurred while getting blocks: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			// Send all messages to the client
 			for _, block := range blocks {
 				message := models.Message{
-					ID:     block.ID,
-					Type:   "add",
-					Room:   block.Room,
-					Coords: block.Coords,
-					Width:  block.Width,
-					Height: block.Height,
-					HTML:   block.HTML,
-					CSS:    block.CSS,
-					JS:     block.JS,
-					Time:   block.Time,
-					Author: block.Author,
+					ID:        block.ID,
+					Type:      "add",
+					Room:      block.Room,
+					Coords:    block.Coords,
+					Width:     block.Width,
+					Height:    block.Height,
+					HTML:      block.HTML,
+					Time:      block.Time,
+					Author:    block.Author,
+					TypeBlock: block.Type,
 				}
 				if err = conn.WriteJSON(message); err != nil {
 					log.Printf("error occurred while writing message to client: %v", err)
 					conn.Close()
-					deleteClient(conn, nil)
+					deleteClient(conn)
 					errcheck = true
 				}
 			}
@@ -797,11 +793,12 @@ func handleMessages(conn *websocket.Conn) {
 					Time:    zone.Time,
 					Author:  zone.Author,
 					Color:   zone.Color,
+					Tags:    zone.Tags,
 				}
 				if err = conn.WriteJSON(message); err != nil {
 					log.Printf("error occurred while writing message to client: %v", err)
 					conn.Close()
-					deleteClient(conn, nil)
+					deleteClient(conn)
 					break
 				}
 			}
@@ -810,7 +807,7 @@ func handleMessages(conn *websocket.Conn) {
 			room, joined := rooms[msg.Room]
 			if !joined {
 				log.Printf("you are not in the room: %v", room)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			room.Clients = removeClientFromRoom(room.Clients, conn)
@@ -820,7 +817,7 @@ func handleMessages(conn *websocket.Conn) {
 			room, joined := rooms[msg.Room]
 			if !joined {
 				conn.WriteJSON(map[string]string{"error": "you are not joined in the room"})
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			errcheck := false
@@ -829,8 +826,6 @@ func handleMessages(conn *websocket.Conn) {
 					blck := models.Block{
 						ID:     block.ID,
 						HTML:   block.HTML,
-						CSS:    block.CSS,
-						JS:     block.JS,
 						Coords: msg.Coords,
 						Width:  msg.Width,
 						Height: msg.Height,
@@ -868,6 +863,9 @@ func handleMessages(conn *websocket.Conn) {
 						}
 					}
 					log.Printf("ko;o;;k;k;")
+					if isAdmin {
+						con = true
+					}
 					if con {
 
 						broadcastMessageToRoomWithoutAuthor(room, msg, conn)
@@ -885,7 +883,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err := collection.UpdateOne(ctx, filter, update)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							errcheck = true
 						}
 						break
@@ -900,7 +898,7 @@ func handleMessages(conn *websocket.Conn) {
 			toRoom, joinedTo := rooms[msg.Room]
 			if !(joinedFrom || joinedTo) {
 				conn.WriteJSON(map[string]string{"error": "you are not joined in the room"})
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			errcheck := false
@@ -912,8 +910,6 @@ func handleMessages(conn *websocket.Conn) {
 					blck := models.Block{
 						ID:     block.ID,
 						HTML:   block.HTML,
-						CSS:    block.CSS,
-						JS:     block.JS,
 						Coords: msg.Coords,
 						Width:  msg.Width,
 						Height: msg.Height,
@@ -964,6 +960,10 @@ func handleMessages(conn *websocket.Conn) {
 
 					log.Printf("n,n,n,n,n,n,n,n,n,n,n,n,")
 
+					if isAdmin {
+						con = true
+					}
+
 					if con {
 						rooms[msg.Room].Blocks = append(toRoom.Blocks, blck)
 						rooms[msg.FromRoom].Blocks = append(fromRoom.Blocks[:i], fromRoom.Blocks[i+1:]...)
@@ -985,7 +985,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err := collection.UpdateOne(ctx, filter, update)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							log.Printf("tt")
 							errcheck = true
 						}
@@ -1009,13 +1009,13 @@ func handleMessages(conn *websocket.Conn) {
 			room, joined := rooms[msg.Room]
 			if !joined {
 				conn.WriteJSON(map[string]string{"error": "you are not joined in the room"})
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			errcheck := false
 			for i, block := range room.Blocks {
 				if block.ID == msg.ID {
-					if block.Author != author {
+					if !isAdmin && block.Author != author {
 						conn.WriteJSON(map[string]string{"error": "you are not the author of the block"})
 						break
 					}
@@ -1029,7 +1029,7 @@ func handleMessages(conn *websocket.Conn) {
 					_, err := collection.DeleteOne(ctx, filter)
 					if err != nil {
 						log.Printf("error occurred while deleting block: %v", err)
-						deleteClient(conn, room)
+						deleteClient(conn)
 						errcheck = true
 						break
 					}
@@ -1041,9 +1041,10 @@ func handleMessages(conn *websocket.Conn) {
 			}
 
 		case "addzone":
-			room, joined := connections[conn].Rooms[msg.Room]
+			room, joined := rooms[msg.Room]
 			if !joined {
 				conn.WriteJSON(map[string]string{"error": "you are not joined in the room"})
+				deleteClient(conn)
 				break
 			}
 			zone := models.Zone{
@@ -1055,6 +1056,7 @@ func handleMessages(conn *websocket.Conn) {
 				Time:    msg.Time,
 				Author:  msg.Author,
 				Color:   msg.Color,
+				Tags:    msg.Tags,
 			}
 			rms := []*models.Room{}
 
@@ -1092,7 +1094,7 @@ func handleMessages(conn *websocket.Conn) {
 
 				if err != nil {
 					log.Printf("error occurred while saving message: %v", err)
-					deleteClient(conn, nil)
+					deleteClient(conn)
 					log.Printf("q")
 					break
 				}
@@ -1104,8 +1106,8 @@ func handleMessages(conn *websocket.Conn) {
 				update := bson.D{{Key: "$set", Value: bson.D{{Key: "id", Value: zone.ID}}}}
 				_, err = collection.UpdateOne(ctx, filter, update)
 				if err != nil {
-					log.Printf("Жerror occurred while updating message: %v", err)
-					deleteClient(conn, nil)
+					log.Printf("?error occurred while updating message: %v", err)
+					deleteClient(conn)
 					break
 				}
 				zonelite := models.ZoneLite{
@@ -1119,16 +1121,16 @@ func handleMessages(conn *websocket.Conn) {
 				updatez := bson.M{"$push": bson.M{"myzones": zonelite}}
 				_, err = collection.UpdateOne(ctx, filter, updatez)
 				if err != nil {
-					log.Printf("Лerror occurred while updating message: %v", err)
-					deleteClient(conn, nil)
+					log.Printf("?error occurred while updating message: %v", err)
+					deleteClient(conn)
 					break
 				}
 				result := collection.FindOne(ctx, bson.M{"username": author})
 				dbUser := &models.User{}
 				err = result.Decode(dbUser)
 				if err != nil {
-					log.Printf("Уerror occurred while updating message: %v", err)
-					deleteClient(conn, nil)
+					log.Printf("?error occurred while updating message: %v", err)
+					deleteClient(conn)
 					break
 				}
 				myZones := dbUser.MyZones
@@ -1137,13 +1139,13 @@ func handleMessages(conn *websocket.Conn) {
 					Zones: myZones,
 				}
 				if err = conn.WriteJSON(message); err != nil {
-					log.Printf("Ыerror occurred while writing message to client: %v", err)
-					deleteClient(conn, nil)
+					log.Printf("?error occurred while writing message to client: %v", err)
+					deleteClient(conn)
 					break
 				}
 				if err != nil {
 					// If an error occurs during FindOne, log it and return.
-					log.Printf("Йerror occurred while checking the zone: %v", err)
+					log.Printf("?error occurred while checking the zone: %v", err)
 					conn.WriteJSON(map[string]string{"error": "zone verification failed"})
 					break
 				}
@@ -1152,6 +1154,48 @@ func handleMessages(conn *websocket.Conn) {
 				broadcastMessageToRoom(room, msg)
 			}
 
+		case "updatecolors":
+			log.Printf("updatecolors: %v", msg)
+			// Update message in database
+			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+			collection := client.Database("chat").Collection("users")
+			filter := bson.M{"username": author}
+			update := bson.D{{Key: "$set", Value: bson.D{
+				{Key: "color1", Value: msg.Color1},
+				{Key: "color2", Value: msg.Color2}}}}
+			_, err := collection.UpdateOne(ctx, filter, update)
+			result := collection.FindOne(ctx, bson.M{"username": author})
+			dbUser := &models.User{}
+			err = result.Decode(dbUser)
+			log.Printf("updateresult: %v", dbUser)
+			if err != nil {
+				log.Printf("error occurred while updating message: %v", err)
+				deleteClient(conn)
+				break
+			}
+
+		case "askcolors":
+			log.Printf("askcolors: %v", msg)
+			collection := client.Database("chat").Collection("users")
+			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+			result := collection.FindOne(ctx, bson.M{"username": author})
+			dbUser := &models.User{}
+			err = result.Decode(dbUser)
+			if err != nil {
+				log.Printf("error occurred while updating message: %v", err)
+				deleteClient(conn)
+				break
+			}
+			message := models.Message{
+				Type:   "askcolors",
+				Color1: dbUser.Color1,
+				Color2: dbUser.Color2,
+			}
+			if err = conn.WriteJSON(message); err != nil {
+				log.Printf("error occurred while writing message to client: %v", err)
+				deleteClient(conn)
+				break
+			}
 		case "subzone":
 			zone := models.ZoneLite{
 				ID:      msg.ID,
@@ -1166,7 +1210,7 @@ func handleMessages(conn *websocket.Conn) {
 			_, err := collection.UpdateOne(ctx, filter, update)
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 
@@ -1178,11 +1222,16 @@ func handleMessages(conn *websocket.Conn) {
 			_, err := collection.UpdateOne(ctx, filter, update)
 			if err != nil {
 				log.Printf("error occurred while updating message: %v", err)
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				return
 			}
 		case "updatecolor":
-			room := rooms[msg.Room]
+			room, joined := rooms[msg.Room]
+			if !joined {
+				conn.WriteJSON(map[string]string{"error": "you are not joined in the room"})
+				deleteClient(conn)
+				break
+			}
 			errcheck := false
 			for _, zn := range room.Zones {
 				if zn.ID == msg.ID {
@@ -1202,7 +1251,7 @@ func handleMessages(conn *websocket.Conn) {
 					_, err := collection.UpdateOne(ctx, filter, update)
 					if err != nil {
 						log.Printf("error occurred while updating message: %v", err)
-						deleteClient(conn, nil)
+						deleteClient(conn)
 						errcheck = true
 						break
 					}
@@ -1216,17 +1265,17 @@ func handleMessages(conn *websocket.Conn) {
 			}
 
 		case "editzone":
-			room, joined := connections[conn].Rooms[msg.Room]
+			room, joined := rooms[msg.Room]
 			if !joined {
 				conn.WriteJSON(map[string]string{"error": "you are not joined in the room"})
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			errcheck := false
 			for i, zn := range room.Zones {
 				if zn.ID == msg.ID {
-					log.Printf("пришел")
-					if zn.Author != author {
+					log.Printf("??????")
+					if !isAdmin && zn.Author != author {
 						conn.WriteJSON(map[string]string{"error": "you are not the author of the block"})
 						break
 					}
@@ -1300,7 +1349,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err := collection.UpdateOne(ctx, filter, update)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							errcheck = true
 							break
 						}
@@ -1325,7 +1374,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err = collection.UpdateOne(ctx, bson.M{"zones.id": msg.ID}, update1, arrayFilter)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							errcheck = true
 						}
 						update2 := bson.M{
@@ -1341,7 +1390,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err = collection.UpdateOne(ctx, bson.M{"myzones.id": msg.ID}, update2, arrayFilter)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							errcheck = true
 						}
 					}
@@ -1356,7 +1405,7 @@ func handleMessages(conn *websocket.Conn) {
 			toRoom, joinedTo := connections[conn].Rooms[msg.Room]
 			if !(joinedFrom || joinedTo) {
 				conn.WriteJSON(map[string]string{"error": "you are not joined in the room"})
-				deleteClient(conn, nil)
+				deleteClient(conn)
 				break
 			}
 			errcheck := false
@@ -1450,7 +1499,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err := collection.UpdateOne(ctx, filter, update)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							errcheck = true
 							break
 						}
@@ -1475,7 +1524,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err = collection.UpdateOne(ctx, bson.M{"zones.id": msg.ID}, update1, arrayFilter)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							errcheck = true
 						}
 						update2 := bson.M{
@@ -1491,7 +1540,7 @@ func handleMessages(conn *websocket.Conn) {
 						_, err = collection.UpdateOne(ctx, bson.M{"myzones.id": msg.ID}, update2, arrayFilter)
 						if err != nil {
 							log.Printf("error occurred while updating message: %v", err)
-							deleteClient(conn, nil)
+							deleteClient(conn)
 							errcheck = true
 						}
 						break
@@ -1553,7 +1602,7 @@ func handleMessages(conn *websocket.Conn) {
 					_, err := collection.DeleteOne(ctx, filter)
 					if err != nil {
 						log.Printf("error occurred while deleting block: %v", err)
-						deleteClient(conn, nil)
+						deleteClient(conn)
 						errcheck = true
 						break
 					}
@@ -1563,7 +1612,7 @@ func handleMessages(conn *websocket.Conn) {
 					_, err = collection.UpdateMany(ctx, filter, update)
 					if err != nil {
 						log.Printf("error occurred while updating message: %v", err)
-						deleteClient(conn, nil)
+						deleteClient(conn)
 						errcheck = true
 						break
 					}
@@ -1571,7 +1620,7 @@ func handleMessages(conn *websocket.Conn) {
 					_, err = collection.UpdateMany(ctx, filter, update)
 					if err != nil {
 						log.Printf("error occurred while updating message: %v", err)
-						deleteClient(conn, nil)
+						deleteClient(conn)
 						errcheck = true
 						break
 					}
@@ -1581,7 +1630,7 @@ func handleMessages(conn *websocket.Conn) {
 					_, err = collection.UpdateMany(ctx, filter, update)
 					if err != nil {
 						log.Printf("error occurred while updating message: %v", err)
-						deleteClient(conn, nil)
+						deleteClient(conn)
 						errcheck = true
 						break
 					}
@@ -1590,6 +1639,313 @@ func handleMessages(conn *websocket.Conn) {
 			}
 			if errcheck {
 				break
+			}
+		case "admin_get_blocks":
+
+			log.Printf("yeeeeeh!!!blocks")
+			var blocks []*models.Block
+
+			collection := client.Database("chat").Collection("blocks")
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			filter := bson.M{
+				"html":   bson.M{"$regex": primitive.Regex{Pattern: adminMsg.Content, Options: "i"}},
+				"author": bson.M{"$regex": primitive.Regex{Pattern: adminMsg.Author, Options: "i"}},
+				"id":     bson.M{"$regex": primitive.Regex{Pattern: adminMsg.ID, Options: "i"}},
+				"zone":   bson.M{"$regex": primitive.Regex{Pattern: adminMsg.Zone, Options: "i"}},
+			}
+
+			if adminMsg.RoomXMin != "" && adminMsg.RoomXMax != "" {
+				filter["room.x"] = bson.M{"$gte": adminMsg.RoomXMin, "$lte": adminMsg.RoomXMax}
+			} else {
+				if adminMsg.RoomXMin != "" {
+					filter["room.x"] = bson.M{"$gte": adminMsg.RoomXMin}
+				}
+				if adminMsg.RoomXMax != "" {
+					filter["room.x"] = bson.M{"$lte": adminMsg.RoomXMax}
+				}
+			}
+
+			if adminMsg.RoomYMin != "" && adminMsg.RoomYMax != "" {
+				filter["room.x"] = bson.M{"$gte": adminMsg.RoomYMin, "$lte": adminMsg.RoomYMax}
+			} else {
+				if adminMsg.RoomYMin != "" {
+					filter["room.y"] = bson.M{"$gte": adminMsg.RoomYMin}
+				}
+				if adminMsg.RoomYMax != "" {
+					filter["room.y"] = bson.M{"$lte": adminMsg.RoomYMax}
+				}
+			}
+
+			log.Printf("filter block: %v", filter)
+
+			// ????????? ?????? ? ???? ?????? ? ?????? ???????
+			cur, err := collection.Find(ctx, filter, &options.FindOptions{
+				Limit: &adminMsg.Limit,
+				Skip:  &adminMsg.Skip,
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// ????????? ??????????? ??????? ? ?????????? ????? blocks
+			for cur.Next(ctx) {
+				var block models.Block
+				if err := cur.Decode(&block); err != nil {
+					log.Printf("error decoding block: %v", err)
+					continue
+				}
+				blocks = append(blocks, &block)
+			}
+
+			// ???????? ?????? ????? ?????????? ?????
+			if err := cur.Err(); err != nil {
+				log.Fatal(err)
+			}
+
+			message := models.BlocksMessage{
+				Type:   "admin_get_blocks",
+				Blocks: blocks,
+			}
+			if err = conn.WriteJSON(message); err != nil {
+				log.Printf("error occurred while writing message to client: %v", err)
+				deleteClient(conn)
+				break
+			}
+
+		case "admin_get_zones":
+			log.Printf("yeeeeeh!!!zones")
+			var zones []*models.Zone
+
+			collection := client.Database("chat").Collection("zones")
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			filter := bson.M{
+				"id":      bson.M{"$regex": primitive.Regex{Pattern: adminMsg.ID, Options: "i"}},
+				"author":  bson.M{"$regex": primitive.Regex{Pattern: adminMsg.Author, Options: "i"}},
+				"content": bson.M{"$regex": primitive.Regex{Pattern: adminMsg.Content, Options: "i"}},
+			}
+
+			if adminMsg.RoomXMin != "" && adminMsg.RoomXMax != "" {
+				filter["room.x"] = bson.M{"$gte": adminMsg.RoomXMin, "$lte": adminMsg.RoomXMax}
+			} else {
+				if adminMsg.RoomXMin != "" {
+					filter["room.x"] = bson.M{"$gte": adminMsg.RoomXMin}
+				}
+				if adminMsg.RoomXMax != "" {
+					filter["room.x"] = bson.M{"$lte": adminMsg.RoomXMax}
+				}
+			}
+
+			if adminMsg.RoomYMin != "" && adminMsg.RoomYMax != "" {
+				filter["room.x"] = bson.M{"$gte": adminMsg.RoomYMin, "$lte": adminMsg.RoomYMax}
+			} else {
+				if adminMsg.RoomYMin != "" {
+					filter["room.y"] = bson.M{"$gte": adminMsg.RoomYMin}
+				}
+				if adminMsg.RoomYMax != "" {
+					filter["room.y"] = bson.M{"$lte": adminMsg.RoomYMax}
+				}
+			}
+
+			log.Printf("filter zone: %v", filter)
+
+			// ????????? ?????? ? ???? ?????? ? ?????? ???????
+			cur, err := collection.Find(context.TODO(), filter, &options.FindOptions{
+				Limit: &adminMsg.Limit,
+				Skip:  &adminMsg.Skip,
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// ????????? ?? ??????????? ??????? ? ????????? ????? ? ??????
+			for cur.Next(ctx) {
+				var zone models.Zone
+				if err := cur.Decode(&zone); err != nil {
+					log.Printf("error decoding zone: %v", err)
+					continue
+				}
+				zones = append(zones, &zone)
+			}
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			message := models.ZonesMessage{
+				Type:  "admin_get_zones",
+				Zones: zones,
+			}
+			if err = conn.WriteJSON(message); err != nil {
+				log.Printf("error occurred while writing message to client: %v", err)
+				deleteClient(conn)
+				break
+			}
+
+		case "admin_get_users":
+			log.Printf("yeeeeeh!!!users")
+			var users []*models.User
+
+			collection := client.Database("chat").Collection("zones")
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			filter := bson.M{
+				"id":       bson.M{"$regex": primitive.Regex{Pattern: adminMsg.ID, Options: "i"}},
+				"username": bson.M{"$regex": primitive.Regex{Pattern: adminMsg.Content, Options: "i"}},
+				"likes":    bson.M{"$regex": primitive.Regex{Pattern: adminMsg.Zone, Options: "i"}},
+			}
+
+			log.Printf("user filter: %v", filter)
+
+			// ????????? ?????? ? ???? ?????? ? ?????? ???????
+			cur, err := collection.Find(context.TODO(), filter, &options.FindOptions{
+				Limit: &adminMsg.Limit,
+				Skip:  &adminMsg.Skip,
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			for cur.Next(ctx) {
+				var user models.User
+				if err := cur.Decode(&user); err != nil {
+					log.Printf("error decoding user: %v", err)
+					continue
+				}
+				users = append(users, &user)
+			}
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			message := models.UsersMessage{
+				Type:  "admin_get_users",
+				Users: users,
+			}
+			if err = conn.WriteJSON(message); err != nil {
+				log.Printf("error occurred while writing message to client: %v", err)
+				deleteClient(conn)
+				break
+			}
+
+		case "admin_get_rooms":
+			log.Printf("yeeeeeh!!!rooms")
+			var filteredRooms []*models.Room
+
+			for _, room := range rooms {
+				minX, _ := strconv.ParseFloat(adminMsg.RoomXMin, 64)
+				maxX, _ := strconv.ParseFloat(adminMsg.RoomXMin, 64)
+				minY, _ := strconv.ParseFloat(adminMsg.RoomYMin, 64)
+				maxY, _ := strconv.ParseFloat(adminMsg.RoomYMax, 64)
+				// ?????????, ????????????? ?? ?????????? ??????? ????????? ??????????
+				if room.Coords.X >= minX && room.Coords.X <= maxX &&
+					room.Coords.Y >= minY && room.Coords.Y <= maxY {
+					filteredRooms = append(filteredRooms, room)
+				}
+			}
+
+			log.Printf("rooms x: %v", filteredRooms)
+
+			message := models.RoomsMessage{
+				Type:  "admin_get_rooms",
+				Rooms: filteredRooms,
+			}
+			if err = conn.WriteJSON(message); err != nil {
+				log.Printf("error occurred while writing message to client: %v", err)
+				deleteClient(conn)
+				break
+			}
+		case "admin_get_connections":
+			log.Printf("yeeeeeh!!!connections")
+			conns := len(connections)
+			message := models.ConnectionsMessage{
+				Type:        "admin_get_connections",
+				Connections: conns,
+			}
+			if err = conn.WriteJSON(message); err != nil {
+				log.Printf("error occurred while writing message to client: %v", err)
+				deleteClient(conn)
+				break
+			}
+		case "edituser":
+			log.Printf("1!!!connections")
+			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+			collection := client.Database("chat").Collection("users")
+
+			result := collection.FindOne(ctx, bson.M{"username": msg.ID})
+			existingUser := &models.User{}
+			err = result.Decode(existingUser)
+			log.Printf("2!!!connections")
+			if err == mongo.ErrNoDocuments || existingUser.Username == msg.Author || isAdmin {
+
+				log.Printf("existingUser: %v", existingUser)
+
+				filter := bson.M{"username": msg.Author}
+				hashedPassword, err := bcrypt.GenerateFromPassword([]byte(msg.Content), bcrypt.DefaultCost)
+				if err != nil {
+					log.Printf("sssss: %v", err)
+					return
+				}
+				update := bson.D{{Key: "$set", Value: bson.D{
+					{Key: "username", Value: msg.ID},
+					{Key: "password", Value: string(hashedPassword)}}}}
+				_, err = collection.UpdateOne(ctx, filter, update)
+
+				connections[conn].Username = msg.ID
+
+				result = collection.FindOne(ctx, bson.M{"username": msg.ID})
+				editedUser := &models.User{}
+				err = result.Decode(editedUser)
+
+				log.Printf("editedUser: %v", editedUser)
+				if err != nil {
+					log.Printf("error occurred while updating message: %v", err)
+					deleteClient(conn)
+					break
+				}
+				log.Printf("3!!!connections")
+				message := models.UsernameMessage{
+					Type:     "edituser",
+					Username: msg.ID,
+				}
+				if err = conn.WriteJSON(message); err != nil {
+					log.Printf("error occurred while writing message to client: %v", err)
+					deleteClient(conn)
+					break
+				}
+			}
+		case "deleteuser":
+			if msg.Author == msg.Content || isAdmin {
+				ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+				collection := client.Database("chat").Collection("zones")
+				filter := bson.M{"author": msg.Content}
+
+				// ???????? ???? ??????????, ??????????????? ???????
+				_, err := collection.DeleteMany(ctx, filter)
+
+				if err != nil {
+					log.Printf("error occurred while deleting block: %v", err)
+					deleteClient(conn)
+					break
+				}
+
+				collection = client.Database("chat").Collection("users")
+				filter = bson.M{"username": msg.Content}
+				_, err = collection.DeleteOne(ctx, filter)
+				if err != nil {
+					log.Printf("error occurred while deleting block: %v", err)
+					deleteClient(conn)
+					break
+				}
 			}
 		case "other":
 			log.Printf("message content: %v", msg.Content)
@@ -1905,8 +2261,8 @@ func CheckZoneForToRoom(room *models.Room, zone models.Zone, conn *websocket.Con
 }
 
 func removeDuplicates(elements []*models.Room) []*models.Room {
-	encountered := map[*models.Room]bool{} // словарь для отслеживания встреченных элементов
-	result := []*models.Room{}             // результирующий массив без дубликатов
+	encountered := map[*models.Room]bool{} // ??????? ??? ???????????? ??????????? ?????????
+	result := []*models.Room{}             // ?????????????? ?????? ??? ??????????
 
 	for v := range elements {
 		if encountered[elements[v]] != true {
@@ -1927,7 +2283,7 @@ func removeClientFromRoom(clients []*websocket.Conn, conn *websocket.Conn) []*we
 	return clients
 }
 
-func deleteClient(conn *websocket.Conn, room *models.Room) {
+func deleteClient2(conn *websocket.Conn, room *models.Room) {
 	if room == nil {
 		return
 	}
@@ -1940,6 +2296,20 @@ func deleteClient(conn *websocket.Conn, room *models.Room) {
 	}
 }
 
+func deleteClient(conn *websocket.Conn) {
+	connRooms := connections[conn].Rooms
+	for room := range connRooms {
+		roomInArray := rooms[room]
+		for i, client := range roomInArray.Clients {
+			if client == conn {
+				roomInArray.Clients = append(roomInArray.Clients[:i], roomInArray.Clients[i+1:]...)
+				break
+			}
+		}
+	}
+	delete(connections, conn)
+}
+
 func broadcastMessageToRoom(room *models.Room, msg models.Message) {
 	for _, client := range room.Clients {
 		err := client.WriteJSON(msg)
@@ -1947,7 +2317,7 @@ func broadcastMessageToRoom(room *models.Room, msg models.Message) {
 		if err != nil {
 			log.Printf("error occurred while writing message to client: %v", err)
 			client.Close()
-			deleteClient(client, room)
+			deleteClient(client)
 		}
 	}
 }
@@ -1960,7 +2330,7 @@ func broadcastMessageToRoomWithoutAuthor(room *models.Room, msg models.Message, 
 			if err != nil {
 				log.Printf("error occurred while writing message to client: %v", err)
 				client.Close()
-				deleteClient(client, room)
+				deleteClient(client)
 			}
 		}
 	}
@@ -1990,6 +2360,7 @@ func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 func uploadBackHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 	id := r.Header.Get("id")
+	log.Printf(id)
 	file, _, err := r.FormFile("image")
 	if err != nil {
 		http.Error(w, "Error uploading file", http.StatusBadRequest)

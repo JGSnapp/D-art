@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import styles from '../CSS/ChooseMethodMobile.module.css';
 
-const ChooseMethodMobile = ({setType}) => {
+const ChooseMethodMobile = ({setType, color1, color2 }) => {
   const [pos, setPos] = useState(styles.pos1);
   const isAnimatingRef = useRef(false);
 
@@ -30,12 +30,10 @@ const ChooseMethodMobile = ({setType}) => {
         borderRadius: '15px',
       }}
     >
-      <div className={`${styles.clr} ${pos}`}></div>
+      <div className={`${styles.clr} ${pos}`}
+        style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}}></div>
       <button className={styles.b} onClick={() => handleClick(styles.pos1, 0)}>
         Библиотека
-      </button>
-      <button className={styles.b} onClick={() => handleClick(styles.pos2, 1)}>
-        GPT
       </button>
       <button className={styles.b} onClick={() => handleClick(styles.pos3, 2)}>
         Code

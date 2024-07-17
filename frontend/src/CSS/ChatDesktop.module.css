@@ -5,6 +5,15 @@
   overflow: hidden;
 }
 
+.App2 {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  overflow: hidden;
+  z-index: 3000;
+  pointer-events: none;
+}
+
 .back {
   height: 100%;
   width: 100%;
@@ -24,7 +33,15 @@
 }
 
 .con.open {
-  width: 70%;
+  right: calc(30% + 20px);
+}
+
+.con.openSmall {
+  right: 330px;
+}
+
+.con.openLarge {
+  right: 520px;
 }
 
 .search {
@@ -59,8 +76,26 @@
   right: calc(30% + 20px);
 }
 
+.topBar.openSmall {
+  right: 330px;
+}
+
+.topBar.openLarge {
+  right: 520px;
+}
+
 .logo {
-  width: 50px; /* Задайте желаемую ширину для логотипа */
+  width: 40px; /* Задайте желаемую ширину для логотипа */
+  height: auto;
+}
+
+.button_svg * {
+  color: white;
+  fill: white;
+}
+
+.button_svg {
+  width: 20px; /* Задайте желаемую ширину для логотипа */
   height: auto;
 }
 
@@ -73,7 +108,6 @@
 }
 
 .toggle_button {
-  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -82,12 +116,33 @@
   bottom: 20px;
   border-radius: 10px;
   right: 20px;
+  height: 35px;
+  width: 35px;
   transition: 0.4s;
+  display: flex;
+  align-items: center; /* Выравнивание по вертикали */
+  justify-content: center; /* Выравнивание по горизонтали */
 }
+
+.button_content {
+  display: flex;
+  align-items: center; /* Выравнивание по вертикали */
+  justify-content: center; /* Выравнивание по горизонтали */
+}
+
 
 .toggle_button.open {
   right: calc(30% + 20px);
 }
+
+.toggle_button.openSmall {
+  right: 330px;
+}
+
+.toggle_button.openLarge {
+  right: 520px;
+}
+
 
 .gradient-button:hover {
   background-image: linear-gradient(to bottom, #45a049, #4CAF50);
@@ -96,7 +151,7 @@
 .separator {
   border: none;
   height: 3px;
-  background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+  background-image: linear-gradient(45deg, #0094FF, #DB00FF);
   margin: 30px 10px 10px 10px; /* Отступы сверху и снизу */
   border-radius: 5px; /* Закругление */
 }

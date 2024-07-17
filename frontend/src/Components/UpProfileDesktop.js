@@ -3,7 +3,7 @@ import styles from'../CSS/UpProfileDesktop.module.css';
 
 const UpProfileDesktop = ({content, id, leave, tp, sub}) => {
     const zgl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxFd_W1I9sAJYUNAot1bna0r0I1FyXBAq_7w&usqp=CAU';
-    const [imageSrc, setImageSrc] = useState(`http://192.168.0.117:8080/avas/${id}`);
+    const [imageSrc, setImageSrc] = useState(`https://d-art.space:8080/avas/${id}`);
     const handleError = () => {
         setImageSrc(zgl);
       };

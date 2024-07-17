@@ -80,7 +80,7 @@
 }
 
 .bqq {
-    background-image: linear-gradient(45deg, #63B2EC, #E356FA);
+    background-image: linear-gradient(45deg, #0094FF, #DB00FF);
     color: white;
     border: none;
     height: 100%; /* Занимает всю высоту flex-контейнера */
@@ -115,3 +115,9 @@
     border: none; /* Убирает границу кнопки */
     color:  rgb(255, 255, 255);
 }
+
+.text4 {
+    font-size: 20px;
+    justify-content: center;
+    color: #787878;
+  }

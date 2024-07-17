@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import mobileStyles from '../CSS/ChatMobile.module.css'; // Стили для мобильных устройств
 import desktopStyles from '../CSS/ChatDesktop.module.css'; // Стили для настольных устройств
-import logo from '../images/mini.png'; // Замените 'your-logo.png' на путь к вашему логотипу
+import menuStyles from '../CSS/MenuDesktop.module.css';
+import {ReactComponent as Eye} from '../images/eye_1.svg';
+import {ReactComponent as Pen} from '../images/pen_1.svg'; // Замените 'your-logo.png' на путь к вашему логотипу
 import MenuDesktop from './MenuDesktop.js';
 import MenuMobile from './MenuMobile.js';
+import GradientSVG from './GradientSVG.js';
 import Zone from './Zone.js';
 import Block from './Block.js';
+import Admin from './Admin.js';
 import HorizontalScrollDesktop from './HorizontalScrollDesktop.js';
 import HorizontalScrollMobile from './HorizontalScrollMobile.js';
 import { useGesture } from 'react-use-gesture';
 import { useSpring, animated } from 'react-spring';
-import DOMPurify from 'dompurify';
 
 const MAX_SCALE = 5;
 const MIN_SCALE = 0.2;
@@ -20,6 +23,61 @@ const INITIAL_TRANSFORM = 'scale(0.5) translate(0px, 0px)';
 const INITIAL_ORIGIN = '0px 0px';
 
 function App({jwt, name}) {
+  const [count, setCount] = useState(false);
+  const [admin, setAdmin] = useState(false);
+  const [todos, setTodos] = useState({ blocks: [], zones: [], users: [], rooms: [] });
+  
+  const [color1, setColor1] = useState("#DB00FF");
+  const [color2, setColor2] = useState("#0094FF");
+  const [isMobile, setIsMobile] = useState(false);
+  const [tags, setTags] = useState([]);
+
+  useEffect(() => {
+    const isMobileDevice = /Mobi/i.test(navigator.userAgent);
+    setIsMobile(isMobileDevice);
+  }, []);
+
+  const currentStyles = useMemo(() => (isMobile ? mobileStyles : desktopStyles), [isMobile]);
+
+
+  const widthCheck = () => {
+    let type = currentStyles.open;
+    if (window.innerWidth * 0.3 < 310){
+      type = currentStyles.openSmall;
+    }
+    else if (window.innerWidth * 0.3 > 500){
+      type = currentStyles.openLarge;}
+    return type;
+  }
+
+  const widthCheckDeskt = () => {
+    let type = menuStyles.open;
+    if (window.innerWidth * 0.3 < 310){
+      type = menuStyles.openSmall;
+    }
+    else if (window.innerWidth * 0.3 > 500){
+      type = menuStyles.openLarge;}
+    return type;
+  }
+
+  const [windowWidth, setWindowWidth] = useState(widthCheck());
+  const [windowWidthDesctop, setWindowWidthDesctop] = useState(widthCheckDeskt());
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(widthCheck());
+      setWindowWidthDesctop(widthCheckDeskt());
+      console.log(widthCheck());
+    };
+
+    // Добавляем слушателя события изменения размера окна
+    window.addEventListener('resize', handleResize);
+
+    // Убираем слушателя события при размонтировании компонента
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
     const coordinates = useRef({ x: 0, y: 0 });
     const [{ transform, transformOrigin }, api] = useSpring(() => ({ 
@@ -191,8 +249,8 @@ function App({jwt, name}) {
   
     },
     {
-      domTarget: window,
-      eventOptions: { passive: false },
+      domTarget: trans,
+      eventOptions: { pointer: true },
     }
   );
   
@@ -205,7 +263,6 @@ function App({jwt, name}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   const [askPatText, setAskPatText] = useState([]);
   const [patText, setPatText] = useState([]);
@@ -216,14 +273,13 @@ function App({jwt, name}) {
 
   const [blocks, setBlocks] = useState([]);
   const [zones, setZones] = useState([]);
+  const [imgShow, setImgShow] = useState(true);
   const [chunks, setChunks] = useState([
     {x:-1, y:-1}, {x:0, y:-1}, {x:1, y:-1},
     {x:-1, y:0}, {x:0, y:0}, {x:1, y:0},   
     {x:-1, y:1}, {x:0, y:1}, {x:1, y:1}
   ]);
   const [html, setHtml] = useState('');
-  const [css, setCss] = useState('');
-  const [js, setJs] = useState('');
   const [zone, setZone] = useState('');
 
   useEffect(() => {
@@ -240,57 +296,54 @@ useEffect(() => {
   console.log(blocks);
 }, [blocks]);
 
-const ws = useRef(null);
+const wsRef = useRef(null);
+const firstRef = useRef(true);
 
 useEffect(() => {
-  connectWebSocket();
-  console.log("asdsdsdsdsdsdsdsdsdsdsd");
-
-  // Cleanup function to close the WebSocket connection when the component unmounts
-  return () => {
-    if (ws.current) {
-      ws.current.close();
-    }
-  };
+  if (firstRef.current == true) {
+  connect();
+  firstRef.current = false;
+  }
 }, []);
 
-const connectWebSocket = () => {
-  if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
-    console.log("Issss");
-    ws.current = new WebSocket(`ws://192.168.0.117:8080/ws?token=${jwt}`);
+const connect = () => {
+  const ws = new WebSocket(`wss://d-art.space/ws?token=${jwt}`);
 
-    ws.current.onopen = () => {
-      console.log('ws opened');
-      ws.current.send(JSON.stringify({ type: "myzones"}));
-      ws.current.send(JSON.stringify({ type: "litezones"}));
-      ws.current.send(JSON.stringify({ type: "mylikes"}));
-      ws.current.send(JSON.stringify({ type: "popularpatterns"}));
-      chunks.map(chunk => addRoom(chunk))};
+  ws.onopen = () => {
+    console.log('ws opened');
+    ws.send(JSON.stringify({ type: "myzones"}));
+    ws.send(JSON.stringify({ type: "litezones"}));
+    ws.send(JSON.stringify({ type: "mylikes"}));
+    ws.send(JSON.stringify({ type: "askcolors"}));
+    ws.send(JSON.stringify({ type: "popularpatterns"}));
+    chunks.map(chunk => {
+      const msg = { type: "join", room: chunk};
+      console.log(msg);
+      ws.send(JSON.stringify(msg));
+    })};
       
-    ws.current.onclose = () => {
+    ws.onclose = () => {
       console.log('ws closed');
-      setTimeout(connectWebSocket, 2000);
+      setTimeout(connect, 500);
     };
 
-    ws.current.onmessage = msg => {
+    ws.onmessage = msg => {
       console.log(JSON.parse(msg.data));
       let message = JSON.parse(msg.data);
-      const { coords, width, color, height, html, css, js, id, room, type, fromroom, author, content } = message;
+      const { coords, width, color, height, html, id, room, type, fromroom, author, content, tags, typeblock } = message;
       if(type === "add"){
         setBlocks(prevState => prevState.filter(zone => zone.id != message.id));
-        let newJs = js.replace('%%name%%', name).replace('%%id%%', id);
-        console.log(newJs);
+        let newHtml = html.replace('__name__', name.current).replace('__id__', id);
         setBlocks(prevState => [...prevState,       
         {
           id,
           coords,
           width,
           height,
-          html,
-          css,
-          js: newJs,
+          html: newHtml,
           room,
-          author
+          author,
+          type: typeblock,
         }]);
       } 
       else if(type === "delete") {
@@ -314,6 +367,11 @@ const connectWebSocket = () => {
       else if(type === "myzones"){
         setMyZones(message.zones);
       }
+      else if(type === "askcolors"){
+        setColor1(message.color1);
+        setColor2(message.color2);
+        console.log(message);
+      }
       else if(type === "searchzones"){
         setSearchZones(message.zones);
       }
@@ -329,7 +387,8 @@ const connectWebSocket = () => {
           content,
           room,
           author,
-          color
+          color,
+          tags
         }]);
       } 
       else if(type === "deletezone") {
@@ -354,6 +413,8 @@ const connectWebSocket = () => {
         setZones(prevState => prevState.filter(mes => !(mes.id == id && roomsAreEqual(mes.room, fromroom))));
       } 
       else if(type === "tpto") {
+        console.log("111");
+        console.log(message.zones[0]);
         tpto(message.zones[0]);
       } 
       else if (type === "mylikes") {
@@ -364,8 +425,48 @@ const connectWebSocket = () => {
         setPatterns(message.patterns);
         console.log("a");
       }
-    };
+      else if(type === "admin_get_connections") {
+        setCount(message.connections);
+        console.log(message);
+      }
+      else if(type === "admin_get_blocks") {
+        setTodos(prevState => {let a = prevState;
+        a["blocks"] = message.blocks
+        return a;
+      });
+        console.log(message);
+      }
+      else if(type === "admin_get_users") {
+        setTodos(prevState => {let a = prevState;
+        a["users"] = message.blocks
+        return a;
+      });
+        console.log(message);
+      }
+      else if(type === "admin_get_rooms") {
+        setTodos(prevState => {let a = prevState;
+        a["rooms"] = message.blocks
+        return a;
+      });
+        console.log(message);
+      }
+      else if(type === "admin_get_zones") {
+        setTodos(prevState => {let a = prevState;
+        a["zones"] = message.blocks
+        return a;
+      });
+        console.log(message);
+      }
+      else if(type === "edituser") {
+        name.current = message.Username;
+        localStorage.setItem('username', message.Username);
+        console.log(message);
+      }
   }
+  ws.onerror = (err) => {
+    console.error(err); // log error
+  };
+  wsRef.current = ws;
   };
 
   const updateBlocksForToroom = (blocks, message) => {
@@ -380,8 +481,6 @@ const connectWebSocket = () => {
         width: message.width,
         height: message.height,
         html: message.html,
-        css: message.css,
-        js: message.js,
         room: message.room,
         author: message.author
       }];
@@ -413,7 +512,7 @@ const connectWebSocket = () => {
   const removeBlock = (id, room) => {
     const msg = { type: "delete", room, id};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
   }; 
 
   const moveBlock = (id, coords, width, height, room ) => {
@@ -434,7 +533,7 @@ const connectWebSocket = () => {
       height
     };
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
   }
   
   const moveBlockTo = (id, coords, width, height, room, fromroom) => {
@@ -456,13 +555,33 @@ const connectWebSocket = () => {
       height
     };
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
+  }
+
+  const addBlockTask = (html, type) => {
+    let height = 0.15 * CHUNKSIZE;
+    let width = 0.15 * CHUNKSIZE;
+    let x = -translateRef.current.x - transformOriginRef.current.x * (1 - scaleRef.current) / scaleRef.current;
+    let y = -translateRef.current.y - transformOriginRef.current.y * (1 - scaleRef.current) / scaleRef.current;
+    let roomX = Math.floor(x / CHUNKSIZE);
+    let roomY = Math.floor(y / CHUNKSIZE);
+    console.log(html);
+    const msg = { 
+      type: "add", 
+      room: {x: roomX, y: roomY},
+      coords: {x, y},
+      width: width,
+      height: height,
+      html: html.replace('__author__', name.current),
+      typeblock: type
+    };
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+    setHtml("");
+    setPatText("");
   }
 
   const addBlock = () => {
-    const sanitizedHTML = DOMPurify.sanitize(html);
-    const sanitizedCSS = DOMPurify.sanitize(css);
-    const sanitizedJS = DOMPurify.sanitize(js);
     let height = 0.15 * CHUNKSIZE;
     let width = 0.15 * CHUNKSIZE;
     let x = -translateRef.current.x - transformOriginRef.current.x * (1 - scaleRef.current) / scaleRef.current;
@@ -470,67 +589,32 @@ const connectWebSocket = () => {
     let roomX = Math.floor(x / CHUNKSIZE);
     let roomY = Math.floor(y / CHUNKSIZE);
     console.log(html);
-    console.log(css);
-    console.log(js);
     const msg = { 
       type: "add", 
       room: {x: roomX, y: roomY},
       coords: {x, y},
       width: width,
       height: height,
-      html: sanitizedHTML,
-      css: sanitizedCSS,
-      js: sanitizedJS.replace('%%author%%', name),
+      html: html.replace('__author__', name.current),
+      typeblock: 'usual'
     };
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setHtml("");
-    setCss("");
-    setJs("");
     setPatText("");
   }
 
-  const addBlockTask = (html, js, css) => {
-    const sanitizedHTML = DOMPurify.sanitize(html);
-    const sanitizedCSS = DOMPurify.sanitize(css);
-    const sanitizedJS = DOMPurify.sanitize(js);
-    let height = 0.15 * CHUNKSIZE;
-    let width = 0.15 * CHUNKSIZE;
-    let x = -translateRef.current.x - transformOriginRef.current.x * (1 - scaleRef.current) / scaleRef.current;
-    let y = -translateRef.current.y - transformOriginRef.current.y * (1 - scaleRef.current) / scaleRef.current;
-    let roomX = Math.floor(x / CHUNKSIZE);
-    let roomY = Math.floor(y / CHUNKSIZE);
-    console.log(html);
-    console.log(css);
-    console.log(js);
-    const msg = { 
-      type: "add", 
-      room: {x: roomX, y: roomY},
-      coords: {x, y},
-      width: width,
-      height: height,
-      html: sanitizedHTML,
-      css: sanitizedCSS,
-      js: sanitizedJS.replace('%%author%%', name),
-    };
-    console.log(msg);
-    ws.current.send(JSON.stringify(msg));
-    setHtml("");
-    setCss("");
-    setJs("");
-    setPatText("");
-  }
   const removeZone = (id, room) => {
     const msg = { type: "deletezone", room, id};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setMyZones(prevState => prevState.filter(message => (message.id !== id)));
   }; 
 
   const updateColor = (id, color, room) => {
     const msg = { type: "updatecolor", color, id, room};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
   }
 
   const moveZone = (id, coords, content, width, height, room ) => {
@@ -552,7 +636,7 @@ const connectWebSocket = () => {
       height
     };
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     
   }
 
@@ -578,7 +662,7 @@ const connectWebSocket = () => {
       height
     };
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
   }
 
   const addZone = () => {
@@ -596,9 +680,10 @@ const connectWebSocket = () => {
       height: height,
       content: zone,    
       color: "#cd9ac3",
+      tags: tags,
     };
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setZone("");
   }
 
@@ -606,19 +691,16 @@ const connectWebSocket = () => {
     const msg = { 
       type: "addpattern", 
       html,
-      css,
-      js,
-      content: patText
+      content: patText,
+      typeblock: "usual"
     };
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     const msg1 = { 
       type: "other", 
       content: patText
     };
-    ws.current.send(JSON.stringify(msg1));
+    wsRef.current.send(JSON.stringify(msg1));
     setHtml("");
-    setCss("");
-    setJs("");
     setPatText("");
   }
 
@@ -627,7 +709,7 @@ const connectWebSocket = () => {
       type: "deletepattern", 
       id
     };
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setPatterns(prevState => prevState.filter(message => (message.id !== id)));
     console.log(msg);
   }
@@ -635,13 +717,13 @@ const connectWebSocket = () => {
   const givePatterns = (content) => {
     const msg = { type: "givepatterns", content};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
   }
 
   const popularPatterns = () => {
     const msg = { type: "popularpatterns"};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
   }
 
   const likePattern = (id) => {
@@ -649,7 +731,7 @@ const connectWebSocket = () => {
       type: "likepattern", 
       id
     };
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setLikes([...likes, id]);
     console.log(msg);
   }
@@ -659,7 +741,7 @@ const connectWebSocket = () => {
       type: "unlikepattern", 
       id
     };
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setLikes(prevState => prevState.filter(message => (message !== id)));
     console.log(msg);
   }
@@ -667,13 +749,13 @@ const connectWebSocket = () => {
   const addRoom = room => {
     const msg = { type: "join", room};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
   };
 
   const leaveRoom = room => {
     const msg = { type: "leave", room};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setBlocks(prevState => prevState.filter(message => !roomsAreEqual(message.room, room)));
     setZones(prevState => prevState.filter(message => !roomsAreEqual(message.room, room)));
   };
@@ -681,19 +763,19 @@ const connectWebSocket = () => {
   const askForZones = (content) => {
     const msg = { type: "askforzones", content};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setText(content);
   }
 
   const leave = (id) => {
     const msg = { type: "leavezone", id};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setSubZones(prevState => prevState.filter(message => (message.id !== id)));
   }
 
   const tp = (id) => {
-    ws.current.send(JSON.stringify({ type: "tpto", id}));
+    wsRef.current.send(JSON.stringify({ type: "tpto", id}));
     console.log("a");
   }
 
@@ -718,11 +800,111 @@ const connectWebSocket = () => {
   const subZone = (id, coords, content) => {
     const msg = { type: "subzone", id};
     console.log(msg);
-    ws.current.send(JSON.stringify(msg));
+    wsRef.current.send(JSON.stringify(msg));
     setSubZones([...subZones, {id, coords, content}]);
   }
 
-  const currentStyles = useMemo(() => (isMobile ? mobileStyles : desktopStyles), [isMobile]);
+  const updateColors = (id, color1, color2) => {
+    const msg = { type: "updatecolors", color1, color2, id};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+    setColor1(color1);
+    setColor2(color2);
+  }; 
+
+  const getBlocks = (id, zone, author, html, roomxmin, roomxmax, roomymin, roomymax) => {
+    const msg = { 
+      type: "admin_get_blocks", 
+      id,
+      zone,
+      author,
+      content: html,
+      roomxmax,
+      roomxmin,
+      roomymax,
+      roomymin,
+      limit: 50,
+      skip: 0};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+  }; 
+
+  const getZones = (id, author, content, roomxmin, roomxmax, roomymin, roomymax) => {
+    const msg = { 
+      type: "admin_get_zones", 
+      id,
+      author,
+      content,
+      roomxmax,
+      roomxmin,
+      roomymax,
+      roomymin,
+      limit: 50,
+      skip: 0};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+  };
+
+  const getUsers = (id, username, likes) => {
+    const msg = { 
+      type: "admin_get_users", 
+      id,
+      content: username,
+      zone: likes,
+      limit: 50,
+      skip: 0};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+  }; 
+
+  const deleteUser = ( username ) => {
+    const msg = { 
+      type: "deleteuser",
+      content: username};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+  }; 
+
+  const deleteMyself = () => {
+    const msg = { 
+      type: "deleteuser",
+      content: name};
+    console.log(msg);
+    localStorage.removeItem('password');
+    localStorage.removeItem('username');
+    window.location.reload(true);
+    wsRef.current.send(JSON.stringify(msg));
+  }; 
+
+
+  const getRooms = (roomxmin, roomxmax, roomymin, roomymax) => {
+    const msg = { 
+      type: "admin_get_rooms", 
+      roomxmax,
+      roomxmin,
+      roomymax,
+      roomymin,
+      limit: 50,
+      skip: 0};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+  }; 
+
+  const getConnections = () => {
+    const msg = { type: "admin_get_connections"};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+  };
+
+  
+  const editUser = (password, username) => {
+    const msg = { type: "edituser", content: password, id: username};
+    console.log(msg);
+    wsRef.current.send(JSON.stringify(msg));
+    name.current = username;
+    localStorage.setItem('username', username);
+    localStorage.setItem('password', password);
+  }
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -750,11 +932,6 @@ const connectWebSocket = () => {
     setIsSearchOpen(false);
     console.log('aaaaaaaaa');
   };
-
-  useEffect(() => {
-    const isMobileDevice = /Mobi/i.test(navigator.userAgent);
-    setIsMobile(isMobileDevice);
-  }, []);
 
   const chunkLoader =(roomX, roomY) => {
     let room = {x: roomX, y: roomY}
@@ -805,10 +982,10 @@ const connectWebSocket = () => {
     formData.append('image', file);
 
     try {
-      const response = await fetch(`http://192.168.0.117:8080/upload_${type}`, {
+      const response = await fetch(`https://d-art.space/backend/upload_${type}`, {
         method: 'POST',
         headers: {
-          'id': taskId
+          'id': type == 'back'? name.current : taskId
         },
         body: formData
       });
@@ -818,13 +995,58 @@ const connectWebSocket = () => {
       } else {
         console.error('Failed to upload file');
       }
+      if(type == 'back') {
+        setImgShow(true);
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
     }
   };
 
   return (
-    <div className={`App ${currentStyles.App}`}       ref={trans}>
+    <div className={`App ${currentStyles.App}`} ref={trans}>
+
+{admin ? <Admin
+        removeUser={deleteUser}
+        removeZone={removeZone}
+        removeBlock={removeBlock}
+        setAdmin={setAdmin}
+        addBlock={addBlock}
+        addZone={addZone}
+        editUser={editUser}
+        getBlocks={getBlocks}
+        getZones={getZones}
+        getUsers={getUsers}
+        getRooms={getRooms}
+        getConnections={getConnections}
+        todos={todos}
+        count={count}
+         style={{      
+          zIndex: 1000,          
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: `100%`,
+          height: `100%`,
+          pointerEvents: 'none',}}>
+          </Admin> :
+
+        <div>
+
+      { imgShow && <img src={`https://d-art.space/backend/backs/${name.current}`} 
+            alt="" 
+            onError={() => {
+                setImgShow(false)
+                console.log('aaaaaaa');
+            }}
+            style={{                
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: `100%`,
+                height: `100%`,
+                objectFit: 'cover',
+                pointerEvents: 'none',}}/>}
 
     <animated.div
       style={{
@@ -840,9 +1062,10 @@ const connectWebSocket = () => {
     >
         {zones.map(zone => 
           <Zone 
+          editUser={editUser}
           ready={ready}
           scaleRef={scaleRef}
-          name = {name}
+          name = {name.current}
             author = {zone.author}
             key={zone.id} 
             room={zone.room}
@@ -862,11 +1085,18 @@ const connectWebSocket = () => {
             startcolor={zone.color}
             updateColor={updateColor}
             updateFile={updateFile}
+            updateColors={updateColors}
+            color1={color1}
+            color2={color2}
+            setAdmin={setAdmin}
+            deleteMyself={deleteMyself}
+            tags={zone.tags}
           />)}
           {blocks.map(block => 
           <Block 
           ready={ready}
           scaleRef={scaleRef}
+          type={block.type}
             author = {block.author}
             key={block.id} 
             room={block.room}
@@ -875,9 +1105,7 @@ const connectWebSocket = () => {
             width={block.width}
             height={block.height}
             html={block.html}
-            css={block.css}
-            js={block.js}
-            name = {name}
+            name = {name.current}
             isEdit={isMobile? isEdit : isMenuOpen}
             CHUNKSIZE={CHUNKSIZE}
             removeBlock={removeBlock}
@@ -889,7 +1117,7 @@ const connectWebSocket = () => {
 
       {isSearchOpen && <button className={currentStyles.back} onClick={downSearch} tabIndex={0} />}
       <div className={`${currentStyles.search} ${isSearchOpen ? currentStyles.open : ''}`}>
-        <div className={`${currentStyles.con} ${isMenuOpen && !isMobile ? currentStyles.open : ''}`}>
+        <div className={`${currentStyles.con} ${isMenuOpen && !isMobile ? windowWidth : ''}`}>
           {isMobile? 
           <UpMenuMobile
             searchZones={searchZones}
@@ -897,20 +1125,26 @@ const connectWebSocket = () => {
             myZones={myZones}
             leave = {leave}
             tp = {tp}
+            color1={color1}
+            color2={color2}
           /> : <UpMenuDesktop
             searchZones={searchZones}
             subZones={subZones}
             myZones={myZones}
             leave = {leave}
             tp = {tp}
+            color1={color1}
+            color2={color2}
           />}
         </div>
       </div>
-      <div className={`${currentStyles.topBar} ${isMenuOpen ? currentStyles.open : ''}`}>
-        <img src={logo} alt="Logo" className={`${currentStyles.logo}`} loading="lazy" />
+      <div className={`${currentStyles.topBar} ${isMobile && isMenuOpen ? currentStyles.open : ''} ${!isMobile && isMenuOpen ? windowWidth : ''}`}>
+        <GradientSVG className={`${currentStyles.logo}`} 
+            color1={color1}
+            color2={color2}></GradientSVG>
         <input
           type="text"
-          placeholder="Введите название области"
+          placeholder="Поиск области по названию"
           className={`${currentStyles.input}`}
           value={text} 
           onChange={event =>{askForZones(event.target.value)}}
@@ -921,10 +1155,7 @@ const connectWebSocket = () => {
       {isMobile? 
           <MenuMobile
           isMenuOpen={isMenuOpen}
-          addBlock={addBlock} 
           html={html} setHtml={setHtml}
-          css={css} setCss={setCss}
-          js={js} setJs={setJs} 
           patterns={patterns}
           likes={likes} SetLikes={setLikes}
           patText={patText} setPatText={setPatText}
@@ -935,18 +1166,20 @@ const connectWebSocket = () => {
           popularPatterns={popularPatterns}
           likePattern={likePattern}
           unlikePattern={unlikePattern}
-          name={name}
+          name={name.current}
           toggleMenu={toggleMenu}
           addZone={addZone}
           setZone={setZone}
           zone={zone}
+          addBlock={addBlock}
           addBlockTask={addBlockTask}
+          color1={color1}
+          color2={color2}
+          tags={tags}
+          setTags={setTags}
           /> : <MenuDesktop
           isMenuOpen={isMenuOpen}
-          addBlock={addBlock} 
           html={html} setHtml={setHtml}
-          css={css} setCss={setCss}
-          js={js} setJs={setJs} 
           patterns={patterns}
           likes={likes} SetLikes={setLikes}
           patText={patText} setPatText={setPatText}
@@ -957,59 +1190,82 @@ const connectWebSocket = () => {
           popularPatterns={popularPatterns}
           likePattern={likePattern}
           unlikePattern={unlikePattern}
-          name={name}
+          name={name.current}
           toggleMenu={toggleMenu}
           addZone={addZone}
           setZone={setZone}
           zone={zone}
+          addBlock={addBlock}
           addBlockTask={addBlockTask}
+          windowWidth={windowWidthDesctop}
+          color1={color1}
+          color2={color2}
+          tags={tags}
+          setTags={setTags}
           />}
-      <button
-        className={`${currentStyles.toggle_button} ${isMenuOpen ? currentStyles.open : ''}`}
-        onClick={isMobile ? startEdit : toggleMenu}
-        tabIndex={0}
-      >
-        {isEdit ? 'Назад' : 'Изменить'}
-      </button>
+<button
+  className={`${currentStyles.toggle_button} ${isMobile && isMenuOpen ? currentStyles.open : ''} ${!isMobile && isMenuOpen ? windowWidth : ''}`}
+  style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}}
+  onClick={isMobile ? startEdit : toggleMenu}
+  tabIndex={0}
+>
+  <div className={currentStyles.button_content}>
+    {(isMobile && isEdit) || (!isMobile && isMenuOpen) ? <Eye src={Eye} alt="Logo" className={`${currentStyles.button_svg}`} /> : <Pen src={Pen} alt="Logo" className={`${currentStyles.button_svg}`} />}
+  </div>
+</button>
+
+
       {isEdit &&
       <button
         className={`${currentStyles.edit_button} ${isMenuOpen ? currentStyles.open : ''}`}
+        style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}}
         onClick={toggleMenu}
         tabIndex={0}
       >
         {isMenuOpen ? 'Закрыть' : 'Добавить'}
       </button>}
+      </div>
+  }
     </div>
   );
 }
 
-const UpMenuMobile = ({searchZones, subZones, myZones, leave, tp}) => {
+const UpMenuMobile = ({searchZones, subZones, myZones, leave, tp, color1, color2}) => {
   return(
     <div className={`App ${mobileStyles.upMenu}`}>
-      <hr className={mobileStyles.separator} />
-          <h2 className={mobileStyles.text2x}>Результаты поиска</h2>
+      <hr className={mobileStyles.separator} 
+      style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}}/>
+          <h2 className={mobileStyles.text2x}
+          style={{color: `${color1}`}}>Результаты поиска</h2>
           {searchZones.length === 0 ? 
-            <p className={mobileStyles.textx} >Ничего не найдено</p> :
+            <p className={mobileStyles.textx}
+            style={{color: `${color1}`}} >Ничего не найдено</p> :
             <HorizontalScrollMobile
             zones ={searchZones}
             subZones={subZones}
             tp={tp}
             leave={leave}/>}
-          <hr className={mobileStyles.separator} />
-            <h2 className={mobileStyles.text2x}>Ваши подписки</h2>
+          <hr className={mobileStyles.separator} 
+          style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}}/>
+            <h2 className={mobileStyles.text2x}
+            style={{color: `${color1}`}}>Ваши подписки</h2>
                        
             {subZones.length === 0 ? 
-            <p className={mobileStyles.textx}>Вы пока ни на что не подписан</p> :
+            <p className={mobileStyles.textx}
+            style={{color: `${color1}`}}>Вы пока ни на что не подписан</p> :
             <HorizontalScrollMobile
             zones ={subZones}
             subZones={subZones}
             tp={tp}
             leave={leave}/>}
-          <hr className={desktopStyles.separator} />
-            <h2 className={mobileStyles.text2x}>Ваши области</h2>
+          <hr className={desktopStyles.separator} 
+          style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}}/>
+            <h2 className={mobileStyles.text2x}
+            style={{color: `${color1}`}}>Ваши области</h2>
 
             {myZones.length === 0 ? 
-            <p className={mobileStyles.textx}>Вы пока не создавали свои области</p> :
+            <p className={mobileStyles.textx}
+            style={{color: `${color1}`}}>Вы пока не создавали свои области</p> :
             <HorizontalScrollMobile
             zones ={myZones}
             subZones={subZones}
@@ -1019,36 +1275,45 @@ const UpMenuMobile = ({searchZones, subZones, myZones, leave, tp}) => {
   );
 }
 
-const UpMenuDesktop = ({searchZones, subZones, myZones, leave, tp}) => {
+const UpMenuDesktop = ({searchZones, subZones, myZones, leave, tp, color1, color2}) => {
   return(
     <div className={`App ${desktopStyles.upMenu}`}>
-      <hr className={desktopStyles.separator} />
-      <h2 className={desktopStyles.text2x}>Результаты поиска</h2>
+      <hr className={desktopStyles.separator} 
+      style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}}/>
+      <h2 className={desktopStyles.text2x}
+      style={{color: `${color1}`}}>Результаты поиска</h2>
 
           {searchZones.length === 0 ? 
-            <p className={desktopStyles.textx} >Ничего не найдено</p> :
+            <p className={desktopStyles.textx}
+            style={{color: `${color1}`}} >Ничего не найдено</p> :
             <HorizontalScrollDesktop 
             zones ={searchZones}
             subZones={subZones}
             tp={tp}
             leave={leave}/>}
 
-          <hr className={desktopStyles.separator} />
-            <h2 className={desktopStyles.text2x}>Ваши подписки</h2>
+          <hr className={desktopStyles.separator}
+          style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}} />
+            <h2 className={desktopStyles.text2x}
+            style={{color: `${color1}`}}>Ваши подписки</h2>
                        
             {subZones.length === 0 ? 
-            <p className={desktopStyles.textx}>Вы пока ни на что не подписан</p> :
+            <p className={desktopStyles.textx}
+            style={{color: `${color1}`}}>Вы пока ни на что не подписан</p> :
             <HorizontalScrollDesktop 
             zones ={subZones}
             subZones={subZones}
             tp={tp}
             leave={leave}/>}
 
-            <hr className={desktopStyles.separator} />
-            <h2 className={desktopStyles.text2x}>Ваши области</h2>
+            <hr className={desktopStyles.separator}
+            style={{backgroundImage: `linear-gradient(45deg, ${color1}, ${color2})`,}} />
+            <h2 className={desktopStyles.text2x}
+            style={{color: `${color1}`}}>Ваши области</h2>
 
             {myZones.length === 0 ? 
-            <p className={desktopStyles.textx}>Вы пока не создавали свои области</p> :
+            <p className={desktopStyles.textx}
+            style={{color: `${color1}`}}>Вы пока не создавали свои области</p> :
             <HorizontalScrollDesktop 
             zones ={myZones}
             subZones={subZones}

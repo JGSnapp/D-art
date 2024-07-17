@@ -14,6 +14,14 @@
     width: 30%;
   }
 
+  .menu.openSmall {
+    width: 310px;
+  }
+
+  .menu.openLarge {
+    width: 500px;
+  }
+
   .cent {
     display: flex;
     align-items: center;

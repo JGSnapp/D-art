@@ -21,7 +21,7 @@ def chat():
         # Функция для вызова API ChatGPT
         def call_openai(message):
             client = OpenAI(
-                api_key="sk-UEstx04gE2L45XUcqwQ8b9kwjqy7R7YQ",
+                api_key="--",
                 base_url="https://api.proxyapi.ru/openai/v1",
             )
 
@@ -45,4 +45,4 @@ def chat():
 
 if __name__ == '__main__':
     app.logger.info('Start')
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=9000)

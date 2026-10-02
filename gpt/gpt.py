@@ -21,7 +21,7 @@ def chat():
         # Функция для вызова API ChatGPT
         def call_openai(message):
             client = OpenAI(
-                api_key="--",
+                api_key=os.environ.get("OPENAI_API_KEY"),
                 base_url="https://api.proxyapi.ru/openai/v1",
             )
 

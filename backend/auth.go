@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"backend/models"
@@ -14,6 +15,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// jwtSecret signs auth tokens; set JWT_SECRET in production.
+func jwtSecret() []byte {
+	if s := os.Getenv("JWT_SECRET"); s != "" {
+		return []byte(s)
+	}
+	return []byte("secret")
+}
 
 func handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -108,7 +117,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix() // Token expires after 24 hours
 
 	// Sign the token with our secret
-	tokenString, err := token.SignedString([]byte("secret"))
+	tokenString, err := token.SignedString(jwtSecret())
 	if err != nil {
 		http.Error(w, "Could not sign token", http.StatusInternalServerError)
 		return
@@ -147,7 +156,7 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			if jwt.GetSigningMethod("HS256") != token.Method {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte("secret"), nil
+			return jwtSecret(), nil
 		})
 
 		if err != nil {

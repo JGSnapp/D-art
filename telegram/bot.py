@@ -1,7 +1,9 @@
+import os
+
 from telebot import types
 import telebot
 
-bot = telebot.TeleBot('--')
+bot = telebot.TeleBot(os.environ["BOT_TOKEN"])
 
 def webAppKeyboard():
    keyboard = types.ReplyKeyboardMarkup(row_width=1)

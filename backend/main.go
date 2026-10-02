@@ -26,11 +26,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	smtpHost    = "smtp.example.com"
-	smtpPort    = "587"
-	senderEmail = "auth@d-art.space"
-	password    = "oDem7p+OZy-xSG"
+var (
+	smtpHost    = os.Getenv("SMTP_HOST")
+	smtpPort    = os.Getenv("SMTP_PORT")
+	senderEmail = os.Getenv("SMTP_SENDER")
+	password    = os.Getenv("SMTP_PASSWORD")
 )
 
 var connections = make(map[*websocket.Conn]*models.Connect)

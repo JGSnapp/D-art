@@ -2,16 +2,26 @@ version: '3.8'
 services:
   gpt:
     build: ./gpt
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
       - 9000:9000
 
   telegram:
     build: ./telegram
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
     ports:
       - 5000:5000
 
   backend:
     build: ./backend
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SENDER=${SMTP_SENDER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
     ports:
       - 8080:8080
     links:
